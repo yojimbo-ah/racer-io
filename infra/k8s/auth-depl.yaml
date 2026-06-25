@@ -1,0 +1,43 @@
+#section that create the deployment and the pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: auth
+  template: 
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: ahmed0ahmed/racer-auth
+          imagePullPolicy : Never
+          env: 
+            - name: MONGO_URI
+              value: 'mongodb://auth-mongo-srv:27017/auth'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+---
+#kubernets service cluesterip so we can acess the pod
+#default service is clusterip service that why we didint have to
+#specifie it
+apiVersion: v1
+kind: Service
+metadata: 
+  name: auth-srv
+spec: 
+  selector:
+    app: auth
+  ports:
+    - name: auth
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

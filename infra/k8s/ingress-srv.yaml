@@ -1,0 +1,58 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-srv
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "positions-srv"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ticket.com
+      http:
+        paths:
+          - path: /api/positions/?(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: positions-srv
+                port: 
+                  number: 3000
+          - path: /socket.io/?(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: positions-srv
+                port:
+                  number: 3000
+          - path: /api/users/?(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: auth-srv
+                port: 
+                  number: 3000
+          - path: /api/races/?(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: races-srv
+                port:
+                  number: 3000  
+          # this is for nextjs handeling it always at the end
+          # handles all the routes that doesnt match the first
+          # routes
+          - path : /?(.*)
+            pathType: ImplementationSpecific
+            backend: 
+              service:
+                name: client-srv
+                port:
+                  number: 80
+  tls:
+    - secretName: ticket-com-tls
+      hosts:
+        - ticket.com

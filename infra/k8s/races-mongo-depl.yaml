@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: races-mongo-depl
+  labels:
+    app: races-mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: races-mongo
+  template: 
+    metadata:
+      labels:
+        app: races-mongo
+    spec:
+      containers:
+        - name: races-mongo
+          image: mongo:latest
+          args: ["--wiredTigerCacheSizeGB", "0.25"]  # ✅ limits mongo cache to 100MB
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          ports:
+            - containerPort: 27017
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata: 
+  name: races-mongo-srv
+spec: 
+  selector:
+    app: races-mongo
+  ports:
+    - name: db
+      protocol: TCP
+      port: 27017
+      targetPort: 27017

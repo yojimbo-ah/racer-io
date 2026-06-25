@@ -1,0 +1,35 @@
+#section that create the deployment and the pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: client
+  template: 
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+        - name: client
+          image: ahmed0ahmed/racer-client
+          imagePullPolicy : Never
+---
+#kubernets service cluesterip so we can acess the pod
+#default service is clusterip service that why we didint have to
+#specifie it
+apiVersion: v1
+kind: Service
+metadata: 
+  name: client-srv
+spec: 
+  selector:
+    app: client
+  ports:
+    - name: client
+      protocol: TCP
+      port: 3000
+      targetPort: 80

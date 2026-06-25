@@ -1,0 +1,53 @@
+#section that create the deployment and the pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: races-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: races
+  template: 
+    metadata:
+      labels:
+        app: races
+    spec:
+      containers:
+        - name: races
+          image: ahmed0ahmed/racer-races
+          imagePullPolicy : Never
+          env:
+            - name: MONGO_URI
+              value: 'mongodb://races-mongo-srv:27017/races'
+            - name: NATS_CLUSTER_ID
+              value: 'racer.io'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef: 
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: 'nats://nats-srv:4222'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+            - name: REDIS_HOST
+              value: races-redis-srv
+---
+#kubernets service cluesterip so we can acess the pod
+#default service is clusterip service that why we didint have to
+#specifie it
+apiVersion: v1
+kind: Service
+metadata: 
+  name: races-srv
+spec: 
+  selector:
+    app: races
+  ports:
+    - name: races
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
