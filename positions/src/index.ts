@@ -6,7 +6,8 @@ import http from "http"
 import redis from "./redis";
 import { RaceStartedListener } from "./events/listeners/raceStartedListener";
 import { RaceFinishedListener } from "./events/listeners/raceFinishedListener";
-
+import { RaceAwaitingEvent } from "@racer-io/common";
+import { RaceAwaitingListener } from "./events/listeners/raceAwaitingListener";
 const connect = async () => {
     // making sure that the enviromental variables exist 
     // so we dont have a errror and so we can use the exclamation mark later
@@ -49,9 +50,11 @@ const connect = async () => {
 
         process.on('SIGINT' , () => natsWrapper.client.close()) ;
         process.on('SIGTERM' , () => natsWrapper.client.close()) ;
+
         new RaceFinishedListener(natsWrapper.client).listen() ;
         new RaceStartedListener(natsWrapper.client).listen() ;
-
+        new RaceAwaitingListener(natsWrapper.client).listen() ;
+        
         const server = http.createServer(app) ;
         initSocket(server) ;
         const port = Number(process.env.PORT) || 3000;

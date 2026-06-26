@@ -1,9 +1,14 @@
-import { Listener , PositionEventPayload , PositionUpdatedEvent , Subjects } from "@racer-io/common";
+import { Listener , PositionEventPayload , PositionUpdatedEvent , Subjects , userStatus } from "@racer-io/common";
 import { queueGroupName } from "../queueGroupName";
 import { Message } from "node-nats-streaming";
 import redis from "../../redis";
 
 const TIME_BEFORE_DELETE = 600 ;
+
+export type UserData = PositionEventPayload & {
+    userStatus : userStatus
+}
+
 
 export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
     subject = Subjects.PositionUpdated as const ;
@@ -13,7 +18,24 @@ export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
         // the player not handeling the logique of the race
 
         // update the postion at redis database 
-        await redis.set(data.userId , JSON.stringify(data.positionPayload) , 'EX' , TIME_BEFORE_DELETE) ;
+        const oldPayload = await redis.get(data.userId) ;
+        let userData : UserData ;
+        if (!oldPayload) {
+            userData = {
+                ...data.positionPayload ,
+                userStatus : userStatus.Idle
+            } ;
+
+        } else {
+            
+            const payload = JSON.parse(oldPayload) as UserData ;
+            userData = {
+                ...data.positionPayload ,
+                userStatus : payload.userStatus
+            } ;
+        }
+
+        await redis.set(data.userId , JSON.stringify(userData) , 'EX' , TIME_BEFORE_DELETE) ;
         console.log(" got event at :" + data.positionPayload.timestamp + `with speed : ${data.positionPayload.speed}`) ;
         msg.ack() ;
     }

@@ -49,9 +49,11 @@ export const initSocket = (server : HttpServer) => {
     }
 
   })
-
   io.on('connection', async (socket) => {
     console.log(`[socket] Client connected: ${socket.id}`);
+
+    // joining the users private room using the users is 
+    socket.join(`user:${socket.userId}`) ;
     
     // Listen for position updates from clients
     socket.on('position:update', async (payload : PositionEventPayload) => {
