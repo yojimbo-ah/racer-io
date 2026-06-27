@@ -11,7 +11,7 @@ export class RaceCancelledListener extends Listener<RaceCancelledEvent> {
         
         // the request will be sent to the first user beceuase the second user is 
         // the one going to acccept it 
-        io.to(`user:${data.userData.user1}`).emit('start_race' , data) ;
+        io.to(`user:${data.userData.user1}`).emit('race_cancelled' , data) ;
         msg.ack() ;
     }
 }

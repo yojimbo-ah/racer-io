@@ -49,7 +49,9 @@ router.post('/api/races/accept-race' ,
                     startingPos : race.startPos ,
                     endingPos : race.endingPos 
                 }) , 'EX' , RACE_EXPIRY_TIME) ;
-
+                
+                // saving the race into the set of active races (so it can be treated later)
+                await redis.sadd('races:active' , race._id.toString()) ;
                 new RaceStartedPublisher(natsWrapper.client).publish({
                     race : {
                         endPosition : race.endingPos ,
@@ -90,3 +92,5 @@ router.post('/api/races/accept-race' ,
 
     }
 )
+
+export {router as acceptRaceRequestRouter} ;

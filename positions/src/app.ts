@@ -9,6 +9,7 @@ app.use(express.json()) ;
 app.use(currentUser) ;
 app.use(requireAuth) ;
 
+
 app.all('*' , async () => {
     throw new NotFoundError() ;
 })
