@@ -10,6 +10,10 @@ import { speedX , speedY , speedTwoAxes } from './func/helper/length';
 
 const TIME_BEFORE_DELETE = 60 ;
 
+
+// maybe i will add a loop of here that runs every 20 seconds that checks for users in
+// in your radius and sent them back to the client so he can create a new raec request
+
 declare module "socket.io" {
   interface Socket {
     userId : string
@@ -84,11 +88,7 @@ export const initSocket = (server : HttpServer) => {
           throw new Error('Error happened') ;
       }
 
-      // Broadcast the position update to all connected clients
-      // io?.emit('position:update', {
-      //   ...payload,
-      //   clientId: socket.id,
-      // });
+
     });
 
     socket.on('disconnect', () => {

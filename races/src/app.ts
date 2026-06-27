@@ -9,7 +9,7 @@ import { RaceFinishedPublisher } from "./events/publishers/raceEndedPublisher";
 import { natsWrapper } from "./nats-wrapper";
 import redis from "./redis";
 
-const TIME_BETWEEN_RACES_CHECKS = 20000 // 10S
+const TIME_BETWEEN_RACES_CHECKS = 20000 // 20S
 const RADIUS_TO_FINISH_POINT = 1 ;
 
 const app = express() ;
@@ -87,7 +87,8 @@ setInterval(async () => {
                                 }
                             }) ;
                         }
-
+                        // setting the status of the user to idle 
+                        // after finishing the race
                         user1.userStatus = userStatus.Idle ;
                         user2.userStatus = userStatus.Idle ;    
                         await redis.set(race.user1 , JSON.stringify(user1) , 'EX' , 3600) ;
