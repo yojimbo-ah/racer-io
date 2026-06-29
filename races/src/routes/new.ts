@@ -24,22 +24,22 @@ router.post('/api/races/new' ,
     [
         body('friendId').isString() ,
         body('startPos').isObject() ,
-        body('startPos.x').isFloat() ,
-        body('startPos.y').isFloat() ,
+        body('startPos.longitude').isFloat() ,
+        body('startPos.latitude').isFloat() ,
         body('finishPos').isObject() ,
-        body('finishPos.x').isFloat() ,
-        body('finishPos.y').isFloat() ,
+        body('finishPos.longitude').isFloat() ,
+        body('finishPos.latitude').isFloat() ,
     ] ,
     validateRequest ,
     async (req : Request , res : Response , next : NextFunction) => {
         const {friendId} = req.body ;
         const startPos = {
-            x : req.body.startPos.x ,
-            y : req.body.srartPos.y
+            longitude : req.body.startPos.longitude ,
+            latitude : req.body.srartPos.latitude
         }
         const endPosition = {
-            x : req.body.finishPos.x ,
-            y : req.body.finishPos.y
+            longitude : req.body.finishPos.longitude ,
+            latitude : req.body.finishPos.latitude
         }
         const result1String = await redis.get(req.currentUser!.id) ;
         const result2String = await redis.get(friendId) ;

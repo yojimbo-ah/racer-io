@@ -5,7 +5,7 @@ import redis from "../../redis";
 
 const TIME_BEFORE_DELETE = 600 ;
 
-export type UserData = PositionEventPayload & {
+export type UserData = PositionUpdatedEvent['data'] & {
     userStatus : userStatus
 }
 
@@ -22,7 +22,7 @@ export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
         let userData : UserData ;
         if (!oldPayload) {
             userData = {
-                ...data.positionPayload ,
+                ...data ,
                 userStatus : userStatus.Idle
             } ;
 
@@ -30,13 +30,13 @@ export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
             
             const payload = JSON.parse(oldPayload) as UserData ;
             userData = {
-                ...data.positionPayload ,
+                ...data ,
                 userStatus : payload.userStatus
             } ;
         }
 
         await redis.set(data.userId , JSON.stringify(userData) , 'EX' , TIME_BEFORE_DELETE) ;
-        console.log(" got event at :" + data.positionPayload.timestamp + `with speed : ${data.positionPayload.speed}`) ;
+        console.log(" got event at :" + data.timestamp) ;
         msg.ack() ;
     }
 }

@@ -62,28 +62,18 @@ export const initSocket = (server : HttpServer) => {
     // Listen for position updates from clients
     socket.on('position:update', async (payload : PositionEventPayload) => {
       try {
-        const data = await redis.get(socket.userId) ;
-        console.log(data) ;
-        if (data) {
-          const oldPayload = JSON.parse(data) as PositionEventPayload ;
-          payload.vx = speedY(payload,oldPayload) ;
-          payload.vy = speedX(payload,oldPayload) ;
-          payload.speed = speedTwoAxes(payload,oldPayload) ;
-        } else {
-          // if there is no data then this is the first position being sent
-          // so speed is zero 
-          payload.vx = 0 ;
-          payload.vy = 0 ;
-          payload.speed = 0 ; 
-        }
+        // will be used later so we can know users around the user who sent the request
+        // plus the users who are currently online
 
-        // save the current positon to redis database then we sent the event to
-        // the race service 
-        redis.set(socket.userId , JSON.stringify(payload) , 'EX' , TIME_BEFORE_DELETE) ;
+        await redis.geoadd('active:users' , payload.x , payload.y , socket.userId) ; // saving the everything into geaspatial group
+
         new PositionUpdatedPublisher(natsWrapper.client).publish({
-          positionPayload : {...payload } ,
+          longitude : payload.x ,
+          latitude : payload.y ,
+          timestamp : payload.timestamp ,
           userId : socket.userId ,
         }) ;
+        
       } catch (err) {
           throw new Error('Error happened') ;
       }

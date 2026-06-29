@@ -9,12 +9,12 @@ interface RaceAttrs  {
     user1 : string
     user2 : string
     startPos : {
-        x : number ,
-        y : number
+        longitude : number ,
+        latitude : number
     } ,
     endingPos : {
-        x : number ,
-        y : number
+        longitude : number ,
+        latitude : number
     }
 }
 // interface that describes the proprityes that a User model has
@@ -29,12 +29,12 @@ interface RaceDocument extends Document {
     user1 : string ;
     user2 : string ;
     startPos : {
-        x : number ,
-        y : number
+        longitude : number ,
+        latitude : number
     } ,
     endingPos : {
-        x : number ,
-        y : number
+        longitude : number ,
+        latitude : number
     } ,
     winner : string | undefined ,
     raceStatus : RaceStatus
@@ -52,24 +52,24 @@ const raceSchema = new mongoose.Schema({
         unique : false
     } ,
     startPos : {
-        x : {
+        longitude : {
             type : Number ,
             required : true ,
             unique : false
         } ,
-        y : {
+        latitude : {
             type : Number ,
             required : true ,
             unique : false
         }
     } ,
     endingPos : {
-        x : {
+        longitude : {
             type : Number ,
             required : true ,
             unique : false
         } ,
-        y : {
+        latitude : {
             type : Number ,
             required : true ,
             unique : false

@@ -97,6 +97,24 @@ export const Dashboard = () => {
       console.log('Position update received:', payload)
     })
 
+    // all of these socket connection will be moved into another page 
+    // just putting them here to just try them if they gonna 
+    // work or not
+    socket.on('recieve_race' , (data) => {
+
+    })
+
+    socket.on('race_cancelled' , (data) => {
+
+    })
+
+    socket.on('race_finished' , (data) => {
+
+    })
+    socket.on('race_started' , (data) =>{
+
+    })
+
     return () => {
       socket.close()
       socketRef.current = null

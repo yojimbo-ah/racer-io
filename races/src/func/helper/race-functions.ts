@@ -8,12 +8,12 @@ export type RaceRedis = {
     user1 : string ;
     user2 : string ;
     startingPos : {
-        x : number ,
-        y : number
+        longitude : number ,
+        latitude : number
     } ,
     endingPos : {
-        x : number ,
-        y : number
+        longitude : number ,
+        latitude : number
     }
 }
 
@@ -41,5 +41,5 @@ export const getUserPosition = async (userId : string) : Promise<UserData> => {
 }
 
 export const getUserLengthFromPos = (pos1 : Position , pos2 : Position ) : number => {
-    return Math.pow((Math.pow(pos1.x - pos1.x , 2) + Math.pow(pos1.y - pos2.y,2)) , 0.5) ;
+    return Math.pow((Math.pow(pos1.longitude - pos1.longitude , 2) + Math.pow(pos1.latitude - pos2.latitude,2)) , 0.5) ;
 }
