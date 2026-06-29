@@ -1,12 +1,12 @@
 import { Server } from 'socket.io';
 import type { Server as HttpServer } from 'http';
-import type { PositionEventPayload , userStatus } from '@racer-io/common';
+import { PositionEventPayload , userStatus } from '@racer-io/common';
 import process = require('node:process');
 import PositionUpdatedPublisher from './events/publishers/PositionUpdatedPublisher';
 import { natsWrapper } from './nats-wrapper';
 import jwt from 'jsonwebtoken';
 import redis from './redis';
-import { speedX , speedY , speedTwoAxes } from './func/helper/length';
+
 
 const TIME_BEFORE_DELETE = 60 ;
 
@@ -28,7 +28,7 @@ export type jwtPayload = {
 
 let io: Server | undefined;
 
-export const initSocket = (server : HttpServer) => {
+export  const initSocket = (server : HttpServer) => {
   io = new Server(server, {
     // Socket.io listens at default /socket.io/ path
     // The ingress routes both /socket.io/ and /api/positions/ to here
@@ -59,6 +59,12 @@ export const initSocket = (server : HttpServer) => {
     // joining the users private room using the users is 
     socket.join(`user:${socket.userId}`) ;
     
+    // saving the status of the user so it can be used later
+    
+    redis.hset(`user:${socket.userId}` , {
+      status : userStatus.Idle
+    })
+
     // Listen for position updates from clients
     socket.on('position:update', async (payload : PositionEventPayload) => {
       try {
@@ -73,7 +79,7 @@ export const initSocket = (server : HttpServer) => {
           timestamp : payload.timestamp ,
           userId : socket.userId ,
         }) ;
-        
+
       } catch (err) {
           throw new Error('Error happened') ;
       }
@@ -81,7 +87,9 @@ export const initSocket = (server : HttpServer) => {
 
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
+      await redis.zrem('active:users' , socket.userId) ;
+      await redis.zrem(`user:${socket.userId}`) ;
       console.log(`[socket] Client disconnected: ${socket.id}`) ;
     }) ;
   });

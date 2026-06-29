@@ -2,8 +2,9 @@
 
 import express , {Request , Response , NextFunction} from "express" ;
 import redis from "../redis";
+import { userStatus } from "@racer-io/common";
 
-const RADIUS_OF_SEARCH = 50 ;
+const RADIUS_OF_SEARCH = 5000 ;
 
 const router = express.Router() ;
 
@@ -19,18 +20,28 @@ router.get('/api/positions/aroundme' ,
             const nearby = await redis.geosearch(
                 'active:users',
                 'FROMMEMBER', userId,
-                'BYRADIUS', RADIUS_OF_SEARCH, 'm',
+                'BYRADIUS', RADIUS_OF_SEARCH, 'km',
                 'ASC' // sorted closest first
-            )
-
+            ) as string [] ;
+            
             // not cheking user status currently just sending it back but in the future
             // cheks will be added of course
-            
-            res.status(200).json({users : nearby}) ;
+            let users : string [] = [] 
+            const promiseArray = nearby.map(async (user : string) => {
+                const status = await redis.hget(`user:${user}` , 'status') ;
+                // filter out the users who are not on idle status 
+                // could be changed in the future such that 
+                // the user could send a query param to seach by 
+                if (status === userStatus.Idle) users.push(user) ;
+
+            }) ;
+
+            await Promise.all(promiseArray) ;
+            res.status(200).json({users : users}) ;
 
         } catch (err) {
             console.log('error happaned') ;
-            console.log(err)
+            console.log(err) ;
             res.status(400).json({message : 'Error happaned couldnt fetch the suers'}) ;
         }
     }

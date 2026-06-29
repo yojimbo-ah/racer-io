@@ -101,18 +101,18 @@ export const Dashboard = () => {
     // just putting them here to just try them if they gonna 
     // work or not
     socket.on('recieve_race' , (data) => {
-
+      console.log(data) ;
     })
 
     socket.on('race_cancelled' , (data) => {
-
+      console.log(data) ;
     })
 
     socket.on('race_finished' , (data) => {
-
+      console.log(data) ;
     })
     socket.on('race_started' , (data) =>{
-
+      console.log(data) ;
     })
 
     return () => {
@@ -120,6 +120,20 @@ export const Dashboard = () => {
       socketRef.current = null
     }
   }, [])
+  setInterval(async () => {
+    const response = await fetch(`https://ticket.com/api/positions/aroundme` , {
+      method : 'GET' ,
+      headers : {
+        'Authorization' : `Bearer ${getToken()}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('error happened') ;
+    }
+    const data = await response.json() ;
+    console.log(data) ;
+  } , 5000) ;
 
   useEffect(() => {
     const emitPosition = () => {
