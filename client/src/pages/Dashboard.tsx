@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import './Dashboard.css'
-import { createPositionSocket, type PositionSnapshot } from '../socket'
+import { createPositionSocket } from '../socket'
 import { useAuth } from '../context/AuthContext'
 
 const getServerUrl = () => {
-  if (window.location.hostname === 'ticket.com' ) {
+  if (window.location.hostname === 'ticket.com') {
     return `/api/positions/`
   }
   return 'https://localhost:3000'
@@ -14,75 +14,33 @@ const serverUrl = getServerUrl()
 
 type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'error'
 
-const initialPosition: PositionSnapshot = {
-  x: 12,
-  y: 22,
-  vx: 4,
-  vy: 2,
-  speed: 48,
+const headingFromCoords = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+  const dLng = lng2 - lng1
+  const dLat = lat2 - lat1
+  return Math.round((Math.atan2(dLng, dLat) * 180) / Math.PI)
 }
-
-const bounds = {
-  min: 6,
-  max: 94,
-}
-
-const advancePosition = (position: PositionSnapshot): PositionSnapshot => {
-  let nextX = position.x + position.vx
-  let nextY = position.y + position.vy
-  let nextVx = position.vx
-  let nextVy = position.vy
-
-  if (nextX <= bounds.min || nextX >= bounds.max) {
-    nextVx = -nextVx
-    nextX = Math.min(bounds.max, Math.max(bounds.min, nextX))
-  }
-
-  if (nextY <= bounds.min || nextY >= bounds.max) {
-    nextVy = -nextVy
-    nextY = Math.min(bounds.max, Math.max(bounds.min, nextY))
-  }
-
-  return {
-    x: nextX,
-    y: nextY,
-    vx: nextVx,
-    vy: nextVy,
-    speed: position.speed,
-  }
-}
-
-const headingFromVector = ({ vx, vy }: PositionSnapshot) =>
-  Math.round((Math.atan2(vy, vx) * 180) / Math.PI)
 
 export const Dashboard = () => {
-  const [connectionState, setConnectionState] =
-    useState<ConnectionState>('connecting')
-  const [position, setPosition] = useState<PositionSnapshot>(initialPosition)
+  const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
   const [lastSentAt, setLastSentAt] = useState<string>('Waiting for first emit')
   const [socketId, setSocketId] = useState<string>('not connected')
-  const { user, logout , getToken} = useAuth()
+  const [coords, setCoords] = useState<{ lat: number; lng: number; speed: number } | null>(null)
+  const [gpsError, setGpsError] = useState<string | null>(null)
+  const { user, logout, getToken } = useAuth()
 
   const socketRef = useRef<ReturnType<typeof createPositionSocket> | null>(null)
-  const positionRef = useRef(position)
+  const prevCoordsRef = useRef<{ lat: number; lng: number } | null>(null)
 
   useEffect(() => {
-    positionRef.current = position
-  }, [position])
-
-  useEffect(() => {
-    console.log('Creating socket connection to:', serverUrl)
-    const socket = createPositionSocket(serverUrl , getToken()) ;
+    const socket = createPositionSocket(serverUrl, getToken())
     socketRef.current = socket
 
     socket.on('connect', () => {
-      console.log('✓ Socket connected:', socket.id)
       setConnectionState('connected')
       setSocketId(socket.id ?? 'connected')
     })
 
     socket.on('disconnect', () => {
-      console.log('✗ Socket disconnected')
       setConnectionState('disconnected')
       setSocketId('not connected')
     })
@@ -97,22 +55,20 @@ export const Dashboard = () => {
       console.log('Position update received:', payload)
     })
 
-    // all of these socket connection will be moved into another page 
-    // just putting them here to just try them if they gonna 
-    // work or not
-    socket.on('recieve_race' , (data) => {
-      console.log(data) ;
+    socket.on('recieve_race', (data) => {
+      console.log(data)
     })
 
-    socket.on('race_cancelled' , (data) => {
-      console.log(data) ;
+    socket.on('race_cancelled', (data) => {
+      console.log(data)
     })
 
-    socket.on('race_finished' , (data) => {
-      console.log(data) ;
+    socket.on('race_finished', (data) => {
+      console.log(data)
     })
-    socket.on('race_started' , (data) =>{
-      console.log(data) ;
+
+    socket.on('race_started', (data) => {
+      console.log(data)
     })
 
     return () => {
@@ -120,43 +76,72 @@ export const Dashboard = () => {
       socketRef.current = null
     }
   }, [])
-  setInterval(async () => {
-    const response = await fetch(`https://ticket.com/api/positions/aroundme` , {
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setGpsError('Geolocation not supported by your browser')
+      return
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, speed } = pos.coords
+        const timestamp = new Date(pos.timestamp).toISOString()
+
+        const heading = prevCoordsRef.current
+          ? headingFromCoords(prevCoordsRef.current.lat, prevCoordsRef.current.lng, latitude, longitude)
+          : 0
+
+        prevCoordsRef.current = { lat: latitude, lng: longitude }
+        setCoords({ lat: latitude, lng: longitude, speed: speed ?? 0 })
+        setGpsError(null)
+
+        const payload = {
+          x: longitude,
+          y: latitude,
+          vx: 0,
+          vy: 0,
+          speed: speed ?? 0,
+          heading,
+          timestamp,
+          source: 'client' as const,
+        }
+
+        socketRef.current?.emit('position:update', payload)
+        setLastSentAt(timestamp)
+      },
+      (err) => {
+        setGpsError(`GPS error: ${err.message}`)
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000,
+      }
+    )
+
+    return () => navigator.geolocation.clearWatch(watchId)
+  }, [])
+  const userAroundMe = async () => {
+    const response = await fetch('https://ticket.com/api/positions/aroundme' , {
       method : 'GET' ,
       headers : {
         'Authorization' : `Bearer ${getToken()}`
       }
     })
-
     if (!response.ok) {
-      throw new Error('error happened') ;
+      console.log(response) ;
+      throw new Error('Error happened')
     }
+
     const data = await response.json() ;
     console.log(data) ;
-  } , 5000) ;
+
+  }
 
   useEffect(() => {
-    const emitPosition = () => {
-      const nextPosition = advancePosition(positionRef.current)
-      positionRef.current = nextPosition
-      setPosition(nextPosition)
-
-      const payload = {
-        ...nextPosition,
-        heading: headingFromVector(nextPosition),
-        timestamp: new Date().toISOString(),
-        source: 'client' as const,
-      }
-
-      socketRef.current?.emit('position:update', payload)
-      setLastSentAt(payload.timestamp)
-    }
-
-    emitPosition()
-    const intervalId = window.setInterval(emitPosition, 3000)
-
-    return () => window.clearInterval(intervalId)
-  }, [])
+    setInterval(userAroundMe , 20000) ; 
+  } , [userAroundMe , setInterval]) ;
 
   const connectionTone = {
     connecting: 'yellow',
@@ -206,15 +191,21 @@ export const Dashboard = () => {
             <article className="status-card">
               <span className="label">Last emit</span>
               <strong>{lastSentAt}</strong>
-              <span className="subtle">Emits on a 3 second interval</span>
+              <span className="subtle">Emits on position change</span>
             </article>
 
             <article className="status-card">
               <span className="label">Current position</span>
-              <strong>
-                {position.x.toFixed(2)}, {position.y.toFixed(2)}
-              </strong>
-              <span className="subtle">X, Y coordinates</span>
+              {gpsError ? (
+                <strong style={{ color: 'red' }}>{gpsError}</strong>
+              ) : coords ? (
+                <strong>{coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}</strong>
+              ) : (
+                <strong>Acquiring GPS...</strong>
+              )}
+              {coords && (
+                <span className="subtle">{(coords.speed * 3.6).toFixed(1)} km/h</span>
+              )}
             </article>
           </div>
         </section>

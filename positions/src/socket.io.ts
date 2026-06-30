@@ -81,15 +81,13 @@ export  const initSocket = (server : HttpServer) => {
         }) ;
 
       } catch (err) {
-          throw new Error('Error happened') ;
+          console.log('updating position failed becauese of the current coardinates system we used')
       }
 
 
     });
 
     socket.on('disconnect', async () => {
-      await redis.zrem('active:users' , socket.userId) ;
-      await redis.zrem(`user:${socket.userId}`) ;
       console.log(`[socket] Client disconnected: ${socket.id}`) ;
     }) ;
   });
