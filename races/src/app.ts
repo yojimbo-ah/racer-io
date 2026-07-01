@@ -3,7 +3,8 @@ import 'express-async-errors';
 import {NotFoundError , errorHandler , currentUser , requireAuth , RaceStatus, userStatus} from "@racer-io/common"
 import { newRouter } from "./routes/new";
 import { acceptRaceRequestRouter } from "./routes/acceptRaceRequest";
-import { getRaces , getRace , getUserPosition , getUserLengthFromPos } from "./func/helper/race-functions";
+import { getRaces , getRace , getUserPosition } from "./func/helper/race-functions";
+import { distanceBetween } from "./func/inRegion";
 import Race from "./models/race-model";
 import { RaceFinishedPublisher } from "./events/publishers/raceEndedPublisher";
 import { natsWrapper } from "./nats-wrapper";
@@ -45,8 +46,8 @@ setInterval(async () => {
                     const race = await getRace(raceId) ;
                     const user1 = await getUserPosition(race.user1) ;
                     const user2 = await getUserPosition(race.user2) ;
-                    const l1 = getUserLengthFromPos(user1 , race.endingPos) ;
-                    const l2 = getUserLengthFromPos(user2 , race.endingPos) ;
+                    const l1 = distanceBetween(user1 , race.endingPos) ;
+                    const l2 = distanceBetween(user2 , race.endingPos) ;
                     // check if one of the user reach the ending position 
                     if (l1 > RADIUS_TO_FINISH_POINT && l2 > RADIUS_TO_FINISH_POINT) return ;
                         const raceRecord = await Race.findById(raceId) ;

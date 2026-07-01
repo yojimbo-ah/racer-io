@@ -83,13 +83,12 @@ router.post('/api/races/accept-race' ,
                         user2 : race.user2
                     }
                 })
+                res.status(200).json({message : "race cancelled" , accepted : false}) ;
             }
 
             await race.save() ;
-            res.status(200).json({message : "race cancelled" , accepted : false})
-        }
-        
 
+        }
     }
 )
 
