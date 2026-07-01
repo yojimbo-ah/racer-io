@@ -10,7 +10,7 @@ import { natsWrapper } from "./nats-wrapper";
 import redis from "./redis";
 
 const TIME_BETWEEN_RACES_CHECKS = 20000 // 20S
-const RADIUS_TO_FINISH_POINT = 1 ;
+const RADIUS_TO_FINISH_POINT = 20 ; // this metric is in meters 
 
 const app = express() ;
 
