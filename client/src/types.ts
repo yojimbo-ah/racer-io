@@ -17,3 +17,8 @@ export type PositionEventPayload = PositionSnapshot & {
   timestamp: string
   source: 'client'
 }
+
+export type GeoPoint = {
+  latitude: number
+  longitude: number
+}

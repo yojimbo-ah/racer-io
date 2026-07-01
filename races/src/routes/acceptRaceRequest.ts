@@ -12,7 +12,7 @@ import { RaceCancelledPublisher } from "../events/publishers/RaceCancelledPublis
 import { natsWrapper } from "../nats-wrapper";
 
 
-const RACE_EXPIRY_TIME = 3600 ; // 1 hour
+const RACE_EXPIRY_TIME = 360000 ; // 1 hour
 
 const router = express.Router() ;
 
@@ -43,7 +43,7 @@ router.post('/api/races/accept-race' ,
                 race.raceStatus = RaceStatus.RaceStared
 
                 // create a new race in reddis database under race:started:raceId
-                await redis.set(`race:started:${race._id}` , JSON.stringify({
+                await redis.set(`race:started:${race._id.toString()}` , JSON.stringify({
                     user1 : race.user1 ,
                     user2 : race.user2 ,
                     startingPos : race.startPos ,

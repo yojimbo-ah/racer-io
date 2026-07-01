@@ -37,9 +37,11 @@ setInterval(async () => {
     try {
         checking = true ;
         const races = await getRaces() ;
+        console.log(races) ;
         if (races) {
             const racesPromise = races.map(async (raceId) => {
                 try {
+                    console.log('am here') ;
                     const race = await getRace(raceId) ;
                     const user1 = await getUserPosition(race.user1) ;
                     const user2 = await getUserPosition(race.user2) ;
@@ -94,6 +96,7 @@ setInterval(async () => {
                         await redis.set(race.user1 , JSON.stringify(user1) , 'EX' , 3600) ;
                         await redis.set(race.user2 , JSON.stringify(user2) , 'EX' , 3600) ;
                         await redis.del(`race:started:${raceRecord._id.toString()}`) ;
+                        await redis.srem('races:active' , raceRecord._id.toString()) ;
 
                 } catch (err) {
                     console.log(err);

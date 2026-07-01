@@ -1,6 +1,7 @@
 import { UserData } from "../../events/listeners/positionUpdatedListener";
 import redis from "../../redis"
 import { Position } from "@racer-io/common";
+import Race from "../../models/race-model";
 
 const RADIUS_TO_FINISH_POINT = 1 ;
 
@@ -23,11 +24,27 @@ export const getRaces = async () : Promise<string[]>  => {
 }
 
 export const getRace = async (raceId : string) : Promise<RaceRedis> => {
-    const raceString = await redis.get(`race:started"${raceId}`) ;
-    if (!raceString) {
+    const raceString = await redis.get(`race:started:${raceId}`) ;
+    if (raceString) {
+        console.log('found the race') ;
+        return JSON.parse(raceString) as RaceRedis ;
+    }
+
+    const raceRecord = await Race.findById(raceId) ;
+    if (!raceRecord) {
+        console.log('didnt find the race');
         throw new Error ('error happened')
     }
-    const race = JSON.parse(raceString) as RaceRedis ;
+
+    const race = {
+        user1 : raceRecord.user1,
+        user2 : raceRecord.user2,
+        startingPos : raceRecord.startPos,
+        endingPos : raceRecord.endingPos,
+    }
+
+    await redis.set(`race:started:${raceId}`, JSON.stringify(race), 'EX', 3600) ;
+
     return race ;
 }
 

@@ -35,7 +35,7 @@ router.post('/api/races/new' ,
         const {friendId} = req.body ;
         const startPos = {
             longitude : req.body.startPos.longitude ,
-            latitude : req.body.srartPos.latitude
+            latitude : req.body.startPos.latitude
         }
         const endPosition = {
             longitude : req.body.finishPos.longitude ,

@@ -22,6 +22,7 @@ export const createPositionSocket = (serverUrl: string , token : string): Socket
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
+      auth : {token}
     })
   }
 }

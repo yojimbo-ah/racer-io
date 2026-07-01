@@ -52,6 +52,228 @@
   padding: 40px 20px;
 }
 
+.toast-card {
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+}
+
+.race-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 20px;
+}
+
+.panel-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(10px);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.panel-card h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.field-group label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #c5d7ff;
+  font-weight: 600;
+}
+
+.field-group input,
+.field-group select {
+  min-height: 46px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(10, 20, 45, 0.65);
+  color: #fff;
+  padding: 0 14px;
+  outline: none;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.map-picker-card {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.map-picker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+
+.map-picker-head h4 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.map-picker-copy {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.map-picker-canvas {
+  height: 320px;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.map-picker-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(10, 20, 45, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.map-picker-footer strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.map-picker-coordinates {
+  font-variant-numeric: tabular-nums;
+}
+
+.field-group input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.primary-btn,
+.secondary-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #f9d423, #ff4e50);
+  color: #111827;
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.primary-btn:hover,
+.secondary-btn:hover {
+  transform: translateY(-1px);
+}
+
+.primary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.nearby-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.nearby-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 13px;
+}
+
+.stream-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 40;
+}
+
+.modal-card {
+  width: min(520px, 100%);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(18, 28, 53, 0.98), rgba(7, 12, 24, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 28px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.modal-text {
+  margin: 10px 0 18px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+.modal-details {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .hero-card {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
@@ -221,6 +443,18 @@
 
   .hero-card {
     padding: 20px;
+  }
+
+  .race-layout,
+  .stream-grid,
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-head,
+  .modal-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .hero-copy h2 {
