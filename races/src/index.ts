@@ -2,6 +2,8 @@ import {app} from "./app";
 import { natsWrapper } from "./nats-wrapper";
 import { PositionUpdatedListener } from "./events/listeners/positionUpdatedListener";
 import mongoose from "mongoose";
+import { UserCreatedListener } from "./events/listeners/userCreatedListener";
+import { UserUpdatedListener } from "./events/listeners/userUpdatedListener";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -37,6 +39,10 @@ const connect = async () => {
         process.on('SIGTERM' , () => natsWrapper.client.close()) ;
 
         new PositionUpdatedListener(natsWrapper.client)
+        .listen() ;
+        new UserCreatedListener(natsWrapper.client)
+        .listen() ;
+        new UserUpdatedListener(natsWrapper.client)
         .listen() ;
 
         mongoose.connect(process.env.MONGO_URI) ;

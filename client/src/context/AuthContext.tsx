@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  signup: (email: string, password: string) => Promise<void>
+  signup: (email: string, password: string, userName: string) => Promise<void>
   logout: () => void
   getToken : () => string
   isAuthenticated: boolean
@@ -58,14 +58,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (email: string, password: string, userName: string) => {
     setIsLoading(true)
     try {
       const response = await fetch(`${getApiUrl()}/api/users/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, userName }),
       })
 
       if (!response.ok) {

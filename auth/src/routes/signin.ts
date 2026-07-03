@@ -14,7 +14,7 @@ router.post('/api/users/signin' ,
         body('password')
             .trim()
             .notEmpty()
-            .withMessage("You must add a passowrd")
+            .withMessage("You must add a passowrd") ,
     ] ,
     validateRequest
     , async (req : Request , res : Response) => {

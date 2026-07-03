@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import './AuthPage.css'
 
 export const SignupPage = () => {
+  const [userName, setUserName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -15,6 +16,11 @@ export const SignupPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (userName.trim().length < 4 || userName.trim().length > 30) {
+      setError('Name must be between 4 and 30 characters')
+      return
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match')
@@ -29,7 +35,7 @@ export const SignupPage = () => {
     setIsSubmitting(true)
 
     try {
-      await signup(email, password)
+      await signup(email, password, userName.trim())
       navigate('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed')
@@ -45,6 +51,22 @@ export const SignupPage = () => {
         <h2>Create Account</h2>
 
         <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="userName">Name</label>
+            <input
+              id="userName"
+              type="text"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="Your display name"
+              required
+              disabled={isSubmitting}
+              minLength={4}
+              maxLength={30}
+            />
+            <small>4-30 characters</small>
+          </div>
+
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
