@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import './Dashboard.css'
 import { createPositionSocket } from '../socket'
 import { useAuth } from '../context/AuthContext'
@@ -9,14 +10,14 @@ const getServerUrl = () => {
   if (window.location.hostname === 'ticket.com') {
     return '/api/positions/'
   }
-  return 'https://localhost:3000'
+  return 'http://localhost:3000'
 }
 
 const getApiUrl = () => {
   if (window.location.hostname === 'ticket.com') {
     return 'https://ticket.com'
   }
-  return 'https://localhost:3000'
+  return 'http://localhost:3000'
 }
 
 const serverUrl = getServerUrl()
@@ -266,6 +267,9 @@ export const Dashboard = () => {
           <h1>🏎️ Racer.io</h1>
         </div>
         <div className="header-right">
+          <Link to="/races" className="secondary-btn">
+            My races
+          </Link>
           <span className="user-email">{user?.email}</span>
           <button onClick={logout} className="logout-btn">
             Logout

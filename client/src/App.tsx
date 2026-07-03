@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
 import { Dashboard } from './pages/Dashboard'
+import { RacesPage } from './pages/RacesPage'
 import './App.css'
 
 function App() {
@@ -18,6 +19,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/races"
+            element={
+              <ProtectedRoute>
+                <RacesPage />
               </ProtectedRoute>
             }
           />

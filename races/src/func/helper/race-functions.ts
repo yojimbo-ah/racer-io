@@ -1,9 +1,7 @@
 import { UserData } from "../../events/listeners/positionUpdatedListener";
 import redis from "../../redis"
-import { Position } from "@racer-io/common";
 import Race from "../../models/race-model";
 
-const RADIUS_TO_FINISH_POINT = 1 ;
 
 export type RaceRedis = {
     user1 : string ;
@@ -37,8 +35,8 @@ export const getRace = async (raceId : string) : Promise<RaceRedis> => {
     }
 
     const race = {
-        user1 : raceRecord.user1,
-        user2 : raceRecord.user2,
+        user1 : raceRecord.users[0],
+        user2 : raceRecord.users[1],
         startingPos : raceRecord.startPos,
         endingPos : raceRecord.endingPos,
     }
@@ -55,8 +53,4 @@ export const getUserPosition = async (userId : string) : Promise<UserData> => {
     }
     const user = JSON.parse(userString) as UserData ;
     return user ;
-}
-
-export const getUserLengthFromPos = (pos1 : Position , pos2 : Position ) : number => {
-    return Math.pow((Math.pow(pos1.longitude - pos1.longitude , 2) + Math.pow(pos1.latitude - pos2.latitude,2)) , 0.5) ;
 }

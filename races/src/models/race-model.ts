@@ -26,8 +26,7 @@ interface RaceModel extends Model<RaceDocument> {
 // a User document has
 
 interface RaceDocument extends Document {
-    user1 : string ;
-    user2 : string ;
+    users : string [] ,
     startPos : {
         longitude : number ,
         latitude : number
@@ -41,16 +40,11 @@ interface RaceDocument extends Document {
 }
 
 const raceSchema = new mongoose.Schema({
-    user1 : {
-        type : String ,
-        required : true ,
-        unique : false
-    } ,
-    user2 : {
-        type : String ,
-        required : true ,
-        unique : false
-    } ,
+    users : {
+        type : [String] ,
+        required : true
+    }
+     ,
     startPos : {
         longitude : {
             type : Number ,
@@ -97,7 +91,11 @@ const raceSchema = new mongoose.Schema({
 
 
 raceSchema.statics.build = (attrs : RaceAttrs) => {
-    return new Race(attrs) ;
+    return new Race({
+        users : [attrs.user1 , attrs.user2] , //user1 always position 1 and user 2 always position 2
+        startPos : attrs.startPos ,
+        endingPos : attrs.endingPos ,
+    })
 }
 
 const Race = mongoose.model<RaceDocument , RaceModel>('Race' , raceSchema) ;

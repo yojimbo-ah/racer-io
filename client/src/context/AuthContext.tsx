@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (window.location.hostname === 'ticket.com') {
       return 'https://ticket.com'
     }
-    return 'https://localhost:3000'
+    return 'http://localhost:3000'
   }
 
   const checkCurrentUser = async () => {

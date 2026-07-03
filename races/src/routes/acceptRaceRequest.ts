@@ -44,8 +44,8 @@ router.post('/api/races/accept-race' ,
 
                 // create a new race in reddis database under race:started:raceId
                 await redis.set(`race:started:${race._id.toString()}` , JSON.stringify({
-                    user1 : race.user1 ,
-                    user2 : race.user2 ,
+                    user1 : race.users[0] ,
+                    user2 : race.users[1] ,
                     startingPos : race.startPos ,
                     endingPos : race.endingPos 
                 }) , 'EX' , RACE_EXPIRY_TIME) ;
@@ -60,8 +60,8 @@ router.post('/api/races/accept-race' ,
                         raceStatus : RaceStatus.RaceStared
                     } ,
                     userData : {
-                        user1 : race.user1 ,
-                        user2 : race.user2
+                        user1 : race.users[0] ,
+                        user2 : race.users[1]
                     }
                 }) ;
 
@@ -79,8 +79,8 @@ router.post('/api/races/accept-race' ,
                         raceStatus : RaceStatus.RaceCancelled
                     } ,
                     userData : {
-                        user1 : race.user1 ,
-                        user2 : race.user2
+                        user1 : race.users[0] ,
+                        user2 : race.users[1]
                     }
                 })
                 res.status(200).json({message : "race cancelled" , accepted : false}) ;

@@ -32,7 +32,7 @@ router.get('/api/positions/aroundme' ,
                 // filter out the users who are not on idle status 
                 // could be changed in the future such that 
                 // the user could send a query param to seach by 
-                if (status === userStatus.Idle) users.push(user) ;
+                if (status === userStatus.Idle && user !== userId) users.push(user) ;
 
             }) ;
 

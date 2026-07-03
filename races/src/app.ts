@@ -3,6 +3,7 @@ import 'express-async-errors';
 import {NotFoundError , errorHandler , currentUser , requireAuth , RaceStatus, userStatus} from "@racer-io/common"
 import { newRouter } from "./routes/new";
 import { acceptRaceRequestRouter } from "./routes/acceptRaceRequest";
+import { getRacesRouter } from "./routes/getRaces";
 import { getRaces , getRace , getUserPosition } from "./func/helper/race-functions";
 import { distanceBetween } from "./func/inRegion";
 import Race from "./models/race-model";
@@ -11,7 +12,7 @@ import { natsWrapper } from "./nats-wrapper";
 import redis from "./redis";
 
 const TIME_BETWEEN_RACES_CHECKS = 20000 // 20S
-const RADIUS_TO_FINISH_POINT = 20 ; // this metric is in meters 
+const RADIUS_TO_FINISH_POINT = 200 ; // this metric is in meters 
 
 const app = express() ;
 
@@ -21,6 +22,7 @@ app.use(currentUser) ;
 app.use(requireAuth) ;
 app.use(newRouter) ;
 app.use(acceptRaceRequestRouter) ;
+app.use(getRacesRouter) ;
 
 // now we have to create a mechanisam that check for running races
 // and check the two players is one of them close to either position
