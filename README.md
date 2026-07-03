@@ -53,6 +53,49 @@ The `infra/k8s` folder wires the runtime pieces together:
 
 Each service owns its own storage. The databases and Redis instances are not shared between services.
 
+## Events
+
+Events are sent through NATS so services can react to state changes without being tightly coupled.
+
+### Shared Subjects
+
+- `user:created`: published by auth after signup, consumed by races to create the local user record.
+- `user:updated`: published by auth when a user profile changes, consumed by races to keep the local copy in sync.
+- `position:updated`: published by positions when a client sends a new GPS sample, consumed by races to keep live user position state current.
+- `race:awaiting`: published by races after a race is created, consumed by positions to notify the invited user over socket.io.
+- `race:started`: published by races after a race is accepted, consumed by positions to update socket state and user status.
+- `race:cancelled`: published by races when a race is rejected, consumed by positions to notify the waiting user.
+- `race:finished`: published by races when a winner is detected, consumed by positions to reset users back to idle.
+
+### Event Flow
+
+1. The client sends a signup request to the auth service.
+2. Auth creates the user and publishes `user:created`.
+3. Races stores that user locally so race records can be resolved without calling auth.
+4. The client sends live GPS updates through the gateway to positions.
+5. Positions updates Redis and publishes `position:updated`.
+6. Races consumes the position stream to keep race logic aligned with the latest user locations.
+7. When the client creates a race, races publishes `race:awaiting`.
+8. Positions receives `race:awaiting` and emits the invitation to the invited user over socket.io.
+9. When the race is accepted or rejected, races publishes `race:started` or `race:cancelled`.
+10. Positions receives those lifecycle events and pushes the socket updates to the browser.
+11. When a winner is detected, races publishes `race:finished` and positions resets both users back to idle.
+
+```mermaid
+flowchart LR
+  Auth[Auth Service]
+  Races[Races Service]
+  Positions[Positions Service]
+  NATS[NATS]
+
+  Auth -->|user:created / user:updated| NATS
+  Positions -->|position:updated| NATS
+  Races -->|race:awaiting / race:started / race:cancelled / race:finished| NATS
+
+  NATS --> Races
+  NATS --> Positions
+```
+
 ## How The Flow Works
 
 1. A user signs up in the client with a name, email, and password.
