@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
 import redis from './redis';
 
 
-const TIME_BEFORE_DELETE = 60 ;
+
 
 
 // maybe i will add a loop of here that runs every 20 seconds that checks for users in

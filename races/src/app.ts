@@ -51,6 +51,8 @@ setInterval(async () => {
                     const l1 = distanceBetween(user1 , race.endingPos) ;
                     const l2 = distanceBetween(user2 , race.endingPos) ;
                     // check if one of the user reach the ending position 
+                    // publishing to the archive service so we can archive the user data
+                    // maybe i fix the event payload for now
                     if (l1 > RADIUS_TO_FINISH_POINT && l2 > RADIUS_TO_FINISH_POINT) return ;
                         const raceRecord = await Race.findById(raceId) ;
                         if (!raceRecord) {

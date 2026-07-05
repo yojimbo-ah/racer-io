@@ -15,7 +15,7 @@ import { RaceAwaitingPublisher } from "../events/publishers/raceAwaitingPublishe
 import { natsWrapper } from "../nats-wrapper";
 import Race from "../models/race-model";
 
-const MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME = 2 //
+const MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME = 20 // in meters 
 const EXPIRY_TIME = 60 ; // the time period where the user being invited can accept the race or it get cancelled automaticlly
 
 const router = express.Router() ;

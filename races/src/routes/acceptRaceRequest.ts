@@ -1,6 +1,8 @@
 // this route is for the user to accept or deny the race request being sent to him
 // more details will be added later
 
+// for more details why use the 0 and 1 index in the users array currently
+// go back to the models/user-model.ts
 
 import express , { Request , Response , NextFunction } from "express";
 import { body } from "express-validator";

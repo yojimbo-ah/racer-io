@@ -8,7 +8,7 @@
 # Build output
 **/dist
 **/.next
-
+**/dataset
 # Docker
 **/.dockerignore
 

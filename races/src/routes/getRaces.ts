@@ -7,16 +7,11 @@ const router = express.Router() ;
 
 router.get('/api/races' , async (req : Request , res : Response , next : NextFunction) => {
     const userId = req.currentUser!.id ;
-    try {
-        const races = await Race.find({
-            users : userId
-        })
+    const races = await Race.find({
+        users : userId
+    }).populate('users') ;
 
-        res.status(200).json({races}) ;
-    } catch (err) {
-        console.log(err) ;
-        res.status(400).json({message : "error hppened"}) ;
-    }
+    res.status(200).json({races}) ;
 
 })
 

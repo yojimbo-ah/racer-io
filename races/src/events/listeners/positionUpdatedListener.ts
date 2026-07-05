@@ -1,5 +1,6 @@
 import { Listener , PositionEventPayload , PositionUpdatedEvent , Subjects , userStatus } from "@racer-io/common";
 import { queueGroupName } from "../queueGroupName";
+import { PositionUpdatedAchivePublisher } from "../publishers/positionUpdatedArchive";
 import { Message } from "node-nats-streaming";
 import redis from "../../redis";
 
@@ -9,7 +10,8 @@ export type UserData = PositionUpdatedEvent['data'] & {
     userStatus : userStatus
 }
 
-
+// need to use hashes here beceause the structure will kinda change beaceause will hold
+// the raceId because we need it on the archiving service also 
 export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
     subject = Subjects.PositionUpdated as const ;
     queueGroupName = queueGroupName ;

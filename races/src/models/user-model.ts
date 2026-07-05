@@ -25,7 +25,8 @@ const userSchema = new mongoose.Schema({
     } ,
     _id : {
         type : String ,
-        required : true
+        required : true ,
+        ref : 'User'
     }
 } ,  {
     toJSON: {

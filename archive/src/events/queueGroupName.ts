@@ -1,0 +1,1 @@
+export const queueGroupName = 'archive:service' ;
