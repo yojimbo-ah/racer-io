@@ -1,1 +1,1 @@
-export const queueGroupName = 'archive:service' ;
+export const queueGroupName = 'archiveservice' ;

@@ -1,0 +1,51 @@
+#section that create the deployment and the pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archive-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: archive
+  template: 
+    metadata:
+      labels:
+        app: archive
+    spec:
+      containers:
+        - name: archive
+          image: ahmed0ahmed/racer-archive
+          imagePullPolicy : Never
+          env: 
+            - name: NATS_CLUSTER_ID
+              value: 'racer.io'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef: 
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: 'nats://nats-srv:4222'
+            - name: MONGO_URI
+              value: 'mongodb://archive-mongo-srv:27017/archive'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+---
+#kubernets service cluesterip so we can acess the pod
+#default service is clusterip service that why we didint have to
+#specifie it
+apiVersion: v1
+kind: Service
+metadata: 
+  name: archive-srv
+spec: 
+  selector:
+    app: archive
+  ports:
+    - name: archive
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

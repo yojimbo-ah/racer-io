@@ -96,10 +96,8 @@ setInterval(async () => {
                         }
                         // setting the status of the user to idle 
                         // after finishing the race
-                        user1.userStatus = userStatus.Idle ;
-                        user2.userStatus = userStatus.Idle ;    
-                        await redis.set(race.user1 , JSON.stringify(user1) , 'EX' , 3600) ;
-                        await redis.set(race.user2 , JSON.stringify(user2) , 'EX' , 3600) ;
+                        await redis.hset(race.user1 , {userStatus : userStatus.Idle , raceId : ''}) ;
+                        await redis.hset(race.user2 , {userStatus : userStatus.Idle , raceId : ''}) ;
                         await redis.del(`race:started:${raceRecord._id.toString()}`) ;
                         await redis.srem('races:active' , raceRecord._id.toString()) ;
 

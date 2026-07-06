@@ -2,7 +2,7 @@ import mongoose , {Model , Document, mongo} from "mongoose";
 import { timeStamp } from "node:console";
 
 interface PositionAttrs {
-    _id : string ,
+    userId : string ,
     longitude : number ,
     latitude : number ,
     raceId : string ,
@@ -18,12 +18,14 @@ interface PositionDocument extends Document {
     latitude : number ,
     timestamp : string ,
     raceId : string | undefined ,
+    userId : string
 }
 
 const positionSchema = new mongoose.Schema({
-    _id : {
+    userId : {
         required : true ,
-        type : String 
+        type : String ,
+        unique : false
     } ,
     longitude : {
         type : Number ,
@@ -36,7 +38,8 @@ const positionSchema = new mongoose.Schema({
     raceId : {
         type : String ,
         required : false ,
-        default : undefined
+        default : undefined ,
+        unique : false
     } , 
     timestamp : {
         required : true ,

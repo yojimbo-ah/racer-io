@@ -41,6 +41,13 @@ spec:
               service:
                 name: races-srv
                 port:
+                  number: 3000
+          - path: /api/archive/?(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: archive-srv
+                port:
                   number: 3000  
           # this is for nextjs handeling it always at the end
           # handles all the routes that doesnt match the first

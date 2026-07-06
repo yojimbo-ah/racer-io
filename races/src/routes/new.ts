@@ -10,7 +10,7 @@ import { body } from "express-validator";
 import {validateRequest ,  userStatus, RaceStatus} from "@racer-io/common";
 import redis from "../redis";
 import { inRegion } from "../func/inRegion";
-import { UserData } from "../events/listeners/positionUpdatedListener";
+import { UserData, UserDataString } from "../events/listeners/positionUpdatedListener";
 import { RaceAwaitingPublisher } from "../events/publishers/raceAwaitingPublisher";
 import { natsWrapper } from "../nats-wrapper";
 import Race from "../models/race-model";
@@ -41,13 +41,25 @@ router.post('/api/races/new' ,
             longitude : req.body.finishPos.longitude ,
             latitude : req.body.finishPos.latitude
         }
-        const result1String = await redis.get(req.currentUser!.id) ;
-        const result2String = await redis.get(friendId) ;
-        if (!result1String || !result2String) {
+        const exists1 = await redis.exists(req.currentUser!.id) ;
+        const exists2 = await redis.exists(friendId) ;
+
+        if (!exists1 || !exists2) {
             throw new Error('Couldnt find needed user positions') ; 
         }
-        const result1 = JSON.parse(result1String) as UserData ;
-        const result2 = JSON.parse(result2String) as UserData ;
+        const result1String = await redis.hgetall(req.currentUser!.id)  as UserDataString ;
+        const result1 : UserData = {
+            ...result1String ,
+            latitude : Number(result1String.latitude) ,
+            longitude : Number(result1String.longitude)
+        }
+        const result2String = await redis.hgetall(friendId)  as UserDataString ;
+        const result2  : UserData = {
+            ...result1String ,
+            latitude : Number(result2String.latitude) ,
+            longitude : Number(result2String.longitude)
+        }
+
 
         // still didnt fix it but must add a check for if the user is already inside a race or not
         // need a fix in the redis database little and also the listeners and publishers events

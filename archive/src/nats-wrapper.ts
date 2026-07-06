@@ -18,7 +18,8 @@ class NatsWrapper {
                 resolve() ;
             }) ;
             this.client.on('error' , (err) => {
-                console.log('error connecting to nats') ;
+                console.log('error connecting to nats' ) ;
+                console.log(err) ;
                 reject(err) ;
             }) ;
         }) ;

@@ -10,10 +10,7 @@ export class PositionUpdatedAchiveListener extends Listener <PositionUpdatedArch
         // logique to save the user positon 
         // the raceId can either be defined or not beceause it either the user
         // is in race or not
-        const pos = Position.build({
-            _id : data.userId ,
-            ...data
-        }) ;
+        const pos = Position.build(data) ;
         try {
             await pos.save() ;
         } catch (err) {

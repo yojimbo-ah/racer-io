@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archive-mongo-depl
+  labels:
+    app: archive-mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: archive-mongo
+  template: 
+    metadata:
+      labels:
+        app: archive-mongo
+    spec:
+      containers:
+        - name: archive-mongo
+          image: mongo:latest
+          args: ["--wiredTigerCacheSizeGB", "0.25"]  # ✅ limits mongo cache to 100MB
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          ports:
+            - containerPort: 27017
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata: 
+  name: archive-mongo-srv
+spec: 
+  selector:
+    app: archive-mongo
+  ports:
+    - name: db
+      protocol: TCP
+      port: 27017
+      targetPort: 27017

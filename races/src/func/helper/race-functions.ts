@@ -1,4 +1,4 @@
-import { UserData } from "../../events/listeners/positionUpdatedListener";
+import { UserData, UserDataString } from "../../events/listeners/positionUpdatedListener";
 import redis from "../../redis"
 import Race from "../../models/race-model";
 
@@ -47,10 +47,14 @@ export const getRace = async (raceId : string) : Promise<RaceRedis> => {
 }
 
 export const getUserPosition = async (userId : string) : Promise<UserData> => {
-    const userString = await redis.get(userId) ;
+    const userString = await redis.hgetall(userId)  as UserDataString ;
     if (!userString) {
         throw new Error ('Couldnt find the right user position');
     }
-    const user = JSON.parse(userString) as UserData ;
+    const user : UserData = {
+        ...userString ,
+        longitude : Number(userString.longitude) ,
+        latitude : Number(userString.latitude)
+    } ;
     return user ;
 }

@@ -6,7 +6,7 @@
 
 import express , { Request , Response , NextFunction } from "express";
 import { body } from "express-validator";
-import { validateRequest , RaceStatus } from "@racer-io/common";
+import { validateRequest , RaceStatus, userStatus } from "@racer-io/common";
 import redis from "../redis";
 import Race from "../models/race-model";
 import { RaceStartedPublisher } from "../events/publishers/raceStartedPublisher";
@@ -66,7 +66,11 @@ router.post('/api/races/accept-race' ,
                         user2 : race.users[1]
                     }
                 }) ;
-
+                await redis.pipeline()
+                    .hset(race.users[0] , {userStatus : userStatus.InRace , raceId : race._id.toString()})
+                    .hset(race.users[1] , {userStatus : userStatus.InRace , raceId : race._id.toString()})
+                    .exec() ;
+                    
                 res.status(200).json({message : "start running" , accepted : true})
             } else {
 
