@@ -74,7 +74,8 @@ Events are sent through NATS so services can react to state changes without bein
 3. Races stores that user locally so race records can be resolved without calling auth.
 4. The client sends live GPS updates through the gateway to positions.
 5. Positions updates Redis and publishes `position:updated`.
-6. Races consumes the position stream to keep race logic aligned with the latest user locations.
+6. Races consumes the position stream to keep race logic aligned with the latest user locations and sent 
+a `positon:updatedArchive` event for the archiving service for archiving data
 7. When the client creates a race, races publishes `race:awaiting`.
 8. Positions receives `race:awaiting` and emits the invitation to the invited user over socket.io.
 9. When the race is accepted or rejected, races publishes `race:started` or `race:cancelled`.
@@ -86,14 +87,17 @@ flowchart LR
   Auth[Auth Service]
   Races[Races Service]
   Positions[Positions Service]
+  Archive[Archive Service]
   NATS[NATS]
 
   Auth -->|user:created / user:updated| NATS
   Positions -->|position:updated| NATS
   Races -->|race:awaiting / race:started / race:cancelled / race:finished| NATS
+  Races -->|postion:updatedArchive| NATS
 
   NATS --> Races
   NATS --> Positions
+  NATS --> Archive
 ```
 
 ## How The Flow Works
@@ -116,12 +120,14 @@ flowchart LR
   Auth[Auth Service]
   Positions[Positions Service]
   Races[Races Service]
+  Archive[Archiving service]
   Common[Common Package]
   NATS[NATS Streaming]
   AuthMongo[(Auth MongoDB)]
   PositionsRedis[(Positions Redis)]
   RacesMongo[(Races MongoDB)]
   RacesRedis[(Races Redis)]
+  ArchiveMongo[(Archive mongo)]
 
   User[Browser / User] --> Gateway
   Gateway --> Client
@@ -129,6 +135,7 @@ flowchart LR
   Gateway -->|/socket.io| Positions
   Gateway -->|/api/positions| Positions
   Gateway --> Races
+  Gateway --> Archive
 
   Auth --> AuthMongo
   Auth --> NATS
@@ -139,6 +146,9 @@ flowchart LR
   Races --> RacesMongo
   Races --> RacesRedis
   Races --> NATS
+
+  Archive --> NATS
+  Archive --> ArchiveMongo
 
   Common -.shared contracts.-> Auth
   Common -.shared contracts.-> Positions
@@ -155,6 +165,7 @@ sequenceDiagram
   participant A as Auth
   participant P as Positions
   participant R as Races
+  participant H as Archive
 
   U->>G: Open the app in the browser
   G->>C: Serve the React app
@@ -169,4 +180,28 @@ sequenceDiagram
   R->>R: Validate radius and track race state
   R->>G: Publish race started / cancelled / finished updates
   G->>C: Deliver updates to the React app
+```
+
+## Position Update flow
+
+```mermaid
+sequenceDiagram
+  participant U as User / Browser
+  participant G as API Gateway
+  participant C as React App
+  participant A as Auth
+  participant P as Positions
+  participant R as Races
+  participant H as Archive
+
+  U->>G: Open the app in the browser
+  G->>C: Serve the React app
+  U->>G: Sign up with name, email, password
+  G->>A: Route auth request to auth service
+  U->>G: Open socket.io connection from the app
+  G->>P: Proxy socket.io to positions service (update psotion from client)
+  P->>G: Publish position:updated event
+  G->>R: listens for positon:updated event (update postion in redis database)
+  R->>G: Publish positon:updatedArchive (postion + race data)
+  G->>H: Listens for postion:updatedArchive and save the data in mongoose databse each time
 ```
