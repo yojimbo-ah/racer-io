@@ -2,6 +2,27 @@
 
 racer.io is a microservices racing app built around an API gateway, live position tracking, and race orchestration. Users reach the gateway first, then the gateway routes them to the React app, the auth service, the positions service, or the races service depending on the request.
 
+## What You Need
+
+To run the app locally you need:
+
+- Docker
+- kubectl
+- Skaffold
+- a local Kubernetes cluster such as Docker Desktop Kubernetes, minikube, or kind
+- a `jwt-secret` Kubernetes secret with `JWT_KEY`
+- a `ticket-com-tls` TLS secret for the ingress host `ticket.com`
+
+You also need `ticket.com` to resolve to your local ingress IP in your hosts file.
+
+## Run Locally
+
+1. Start your local Kubernetes cluster and make sure `kubectl` is connected to it.
+2. Create or confirm the required secrets exist in the cluster.
+3. Run `skaffold dev` from the repo root.
+4. Add `ticket.com` to your hosts file if it is not already mapped to the ingress controller.
+5. Open `https://ticket.com` in your browser.
+
 ## API Gateway
 
 The API gateway is the Kubernetes ingress in `infra/k8s/ingress-srv.yaml`. It is the public entry point for the app and the browser connects to it first. It routes traffic to the correct service based on the request path:
@@ -9,6 +30,7 @@ The API gateway is the Kubernetes ingress in `infra/k8s/ingress-srv.yaml`. It is
 - `/api/users` goes to the auth service.
 - `/api/positions` and `/socket.io` go to the positions service.
 - `/api/races` goes to the races service.
+- `/api/archive` goes to the archive service.
 - everything else goes to the client service.
 
 This keeps the browser talking to one public host while the backend remains split into isolated services. The browser loads the React app through the gateway, and the socket.io connection from the app is also proxied through the gateway to the positions service.
@@ -22,6 +44,7 @@ The app is built around live location tracking and race orchestration. A user si
 - `client`: React front end for signup, login, the dashboard, and race history.
 - `auth`: user signup, signin, and current-user endpoints.
 - `positions`: receives location updates, finds nearby users, and emits position events.
+- `archive`: receives user postions and races , doesnt emit any events currently.
 - `races`: creates race records, handles acceptance, tracks active races, and marks them finished.
 - `common`: shared events, middleware, enums, and error helpers : https://www.npmjs.com/package/@racer-io/common
 - `infra`: Kubernetes manifests and ingress configuration for local or cluster deployment.
@@ -41,6 +64,7 @@ The `skaffold.yaml` file builds and syncs the four app containers:
 - `racer-positions`
 - `racer-races`
 - `racer-client`
+- `racer-archive`
 
 The `infra/k8s` folder wires the runtime pieces together:
 
@@ -48,6 +72,7 @@ The `infra/k8s` folder wires the runtime pieces together:
 - `auth-depl.yaml` runs the auth service with its own MongoDB and NATS.
 - `positions-depl.yaml` runs the positions service with its own Redis and NATS.
 - `races-depl.yaml` runs the races service with its own MongoDB, its own Redis, and NATS.
+- `archive-depl.yaml` runs the archive service with its own MongoDb , and NATS
 - `client-depl.yaml` serves the React app.
 - `nats-depl.yaml` provides the event bus used for inter-service communication.
 
