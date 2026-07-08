@@ -7,6 +7,13 @@
     "start": "ts-node-dev --poll src/index.ts",
     "test": "jest --watchAll --no-cache"
   },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "./src/test/setup.ts"
+    ]
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -30,6 +37,7 @@
     "@types/node": "^25.5.0",
     "@types/supertest": "^7.2.0",
     "jest": "^30.3.0",
+    "mongodb-memory-server": "^11.0.1",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"

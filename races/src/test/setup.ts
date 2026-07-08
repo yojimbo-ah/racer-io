@@ -1,23 +1,22 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
-import request from "supertest";
-import app from "../app";
+import jwt from "jsonwebtoken";
 import { natsWrapper } from "../nats-wrapper";
 
 declare global {
-    var getAuthToken: () => Promise<string>;
+    var getAuthToken: (id?: string, email?: string) => string;
 }
 
 let mongo: MongoMemoryServer;
 
-jest.setTimeout(30000);
-
 beforeAll(async () => {
-    process.env.JWT_KEY = "supersecretpassword";
+    process.env.NODE_ENV = "test";
+    process.env.JWT_KEY = process.env.JWT_KEY || "supersecretpassword";
 
     mongo = await MongoMemoryServer.create();
     const mongoUri = mongo.getUri();
     await mongoose.connect(mongoUri);
+
     (natsWrapper as any)._client = {
         publish: jest.fn().mockImplementation(
             (
@@ -27,12 +26,12 @@ beforeAll(async () => {
             ) => callback()
         ),
     };
-}, 1000000);
-
+});
 
 beforeEach(async () => {
     jest.clearAllMocks();
     const collections = await mongoose.connection.db?.collections();
+
     if (collections?.length) {
         await Promise.all(
             collections.map(async (collection) => {
@@ -43,23 +42,16 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
-    await mongoose.connection.dropDatabase();
-    await mongoose.connection.close(true);
+    await mongoose.disconnect();
     await mongo.stop();
-});
+}, 30000);
 
-global.getAuthToken = async () => {
-    const email = "test@test.com";
-    const password = "password";
-
-    const response = await request(app)
-        .post("/api/users/signup")
-        .send({
+global.getAuthToken = (id = "test-user-id", email = "test@test.com") => {
+    return jwt.sign(
+        {
+            id,
             email,
-            password,
-            userName: "test-user",
-        })
-        .expect(201);
-
-    return response.body.token;
+        },
+        process.env.JWT_KEY!
+    );
 };

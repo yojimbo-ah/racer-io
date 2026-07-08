@@ -20,9 +20,9 @@ export type UserDataString = {
     timestamp : string
 }
 
-// ALERT
-// need to use hashes here beceause the structure will kinda change beaceause will hold
-// the raceId because we need it on the archiving service also 
+
+// SMALL NOTICE : that when using hgetall and hget numbers are returned as string ,
+// that why we have to types of objects here
 
 export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
     subject = Subjects.PositionUpdated as const ;
