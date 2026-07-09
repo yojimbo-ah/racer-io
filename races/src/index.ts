@@ -29,7 +29,7 @@ const connect = async () => {
         await natsWrapper.connect(process.env.NATS_CLUSTER_ID , process.env.NATS_CLIENT_ID , {
             url : process.env.NATS_URL
         }) ;
-
+        console.log('just testing the ci workflow') ;
         natsWrapper.client.on('close' , () => {
             console.log('NATS connection clossed') ;
             process.exit() ;
