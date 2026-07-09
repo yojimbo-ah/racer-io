@@ -5,7 +5,8 @@
   "scripts": {
     "start": "ts-node-dev --poll src/index.ts",
     "simulate:two-player": "node scripts/two-player-sim.js",
-    "test": "jest --watchAll --no-cache"
+    "test": "jest --watchAll --no-cache" ,
+    "test:ci" : "jest"
   },
   "jest": {
     "preset": "ts-jest",
