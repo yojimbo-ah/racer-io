@@ -40,6 +40,7 @@ const connect = async () => {
             console.log('NATS connection clossed') ;
             process.exit() ;
         })
+        await redis.connect() ;
 
         redis.on('connect' , () => {
             console.log('connecting to redis') ;

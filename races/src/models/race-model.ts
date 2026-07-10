@@ -73,8 +73,9 @@ const raceSchema = new mongoose.Schema({
         type : String ,
         required : false
     } ,
-    RaceStatus : {
-        type : Object.values(RaceStatus) ,
+    raceStatus : {
+        type : String ,
+        enum : Object.values(RaceStatus) ,
         required : true ,
         default : RaceStatus.RaceAwaiting
     }

@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node-dev --poll src/index.ts",
-    "test": "jest --watchAll --no-cache" ,
-    "test:ci" : "jest"
+    "test": "jest --watchAll --no-cache",
+    "test:ci": "jest"
   },
   "jest": {
     "preset": "ts-jest",
@@ -20,7 +20,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@racer-io/common": "^1.0.17",
+    "@racer-io/common": "^1.0.18",
     "express": "^4.22.1",
     "express-async-errors": "^3.1.1",
     "express-validator": "^7.3.1",
@@ -39,6 +39,7 @@
     "@types/supertest": "^7.2.0",
     "jest": "^30.3.0",
     "mongodb-memory-server": "^11.0.1",
+    "redis-memory-server": "^0.17.0",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"

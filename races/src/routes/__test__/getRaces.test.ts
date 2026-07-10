@@ -3,6 +3,9 @@ import { RaceStatus } from "@racer-io/common";
 import { app } from "../../app";
 import Race from "../../models/race-model";
 
+// moking all the nats-wrapper from the mocks folder 
+jest.mock("../../nats-wrapper")
+
 describe("GET /api/races", () => {
     it("returns 401 when user is not authenticated", async () => {
         await request(app).get("/api/races").send().expect(401);

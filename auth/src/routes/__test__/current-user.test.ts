@@ -1,6 +1,9 @@
 import request from "supertest";
 import app from "../../app";
 
+// moking all the nats-wrapper from the mocks folder 
+jest.mock("../../nats-wrapper");
+
 it("responds with details about the current user", async () => {
     const token = await getAuthToken();
     expect(token).toBeDefined();

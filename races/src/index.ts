@@ -4,6 +4,7 @@ import { PositionUpdatedListener } from "./events/listeners/positionUpdatedListe
 import mongoose from "mongoose";
 import { UserCreatedListener } from "./events/listeners/userCreatedListener";
 import { UserUpdatedListener } from "./events/listeners/userUpdatedListener";
+import redis from "./redis";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -46,7 +47,7 @@ const connect = async () => {
         .listen() ;
 
         mongoose.connect(process.env.MONGO_URI) ;
-        
+        await redis.connect() ;
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;
         })

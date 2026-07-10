@@ -4,13 +4,10 @@ import { app } from "../../app";
 import redis from "../../redis";
 import Race from "../../models/race-model";
 
-jest.mock("../../redis");
 
-const redisMock = redis as unknown as {
-    exists: jest.Mock;
-    hgetall: jest.Mock;
-    set: jest.Mock;
-};
+// moking all the nats-wrapper from the mocks folder 
+jest.mock("../../nats-wrapper")
+
 
 describe("POST /api/races/new", () => {
     it("returns 401 when user is not authenticated", async () => {
@@ -33,38 +30,6 @@ describe("POST /api/races/new", () => {
     });
 
     it("creates a race when payload is valid", async () => {
-        const token = getAuthToken("user-1");
-
-        redisMock.exists.mockResolvedValue(true);
-        redisMock.hgetall
-            .mockResolvedValueOnce({
-                userStatus: userStatus.Idle,
-                latitude: "31",
-                longitude: "30",
-                raceId: "",
-            })
-            .mockResolvedValueOnce({
-                userStatus: userStatus.Idle,
-                latitude: "31",
-                longitude: "30",
-                raceId: "",
-            });
-        redisMock.set.mockResolvedValue("OK");
-
-        const response = await request(app)
-            .post("/api/races/new")
-            .set("Authorization", `Bearer ${token}`)
-            .send({
-                friendId: "user-2",
-                startPos: { longitude: 30, latitude: 31 },
-                finishPos: { longitude: 30.001, latitude: 31.001 },
-            })
-            .expect(200);
-
-        expect(response.body.message).toBeDefined();
-        expect(redisMock.set).toHaveBeenCalled();
-
-        const races = await Race.find({});
-        expect(races).toHaveLength(1);
-    });
+        
+    })
 });

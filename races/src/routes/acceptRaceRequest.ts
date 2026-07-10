@@ -54,6 +54,8 @@ router.post('/api/races/accept-race' ,
                 
                 // saving the race into the set of active races (so it can be treated later)
                 await redis.sadd('races:active' , race._id.toString()) ;
+                race.raceStatus = RaceStatus.RaceStared ;
+                await race.save() ;
                 new RaceStartedPublisher(natsWrapper.client).publish({
                     race : {
                         endPosition : race.endingPos ,

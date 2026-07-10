@@ -101,7 +101,7 @@ router.post('/api/races/new' ,
         })
 
 
-        res.status(200).json({message : "race has been created in awaiting status waiting for other users confirmatiosn"}) ;
+        res.status(200).json({message : "race has been created in awaiting status waiting for other users confirmatiosn" , raceId : race._id.toString()}) ;
     }
 
 )

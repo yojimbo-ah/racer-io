@@ -1,6 +1,9 @@
 import request from "supertest";
 import app from "../../app";
 
+// moking all the nats-wrapper from the mocks folder 
+jest.mock("../../nats-wrapper");
+
 it("returns 400 when user is not found", async () => {
     await request(app)
         .post("/api/users/signin")
