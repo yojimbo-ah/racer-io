@@ -71,7 +71,7 @@ export  const initSocket = (server : HttpServer) => {
         // will be used later so we can know users around the user who sent the request
         // plus the users who are currently online
 
-        await redis.geoadd('active:users' , payload.x , payload.y , socket.userId) ; // saving the everything into geaspatial group
+        await redis.geoadd('active:users' , payload.x , payload.y , socket.userId) ; // saving  everything into geaspatial group
 
         new PositionUpdatedPublisher(natsWrapper.client).publish({
           longitude : payload.x ,

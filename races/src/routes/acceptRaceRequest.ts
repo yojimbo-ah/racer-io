@@ -68,10 +68,8 @@ router.post('/api/races/accept-race' ,
                         user2 : race.users[1]
                     }
                 }) ;
-                await redis.pipeline()
-                    .hset(race.users[0] , {userStatus : userStatus.InRace , raceId : race._id.toString()})
-                    .hset(race.users[1] , {userStatus : userStatus.InRace , raceId : race._id.toString()})
-                    .exec() ;
+                await redis.hset(race.users[0] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
+                await redis.hset(race.users[1] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
                     
                 res.status(200).json({message : "start running" , accepted : true})
             } else {

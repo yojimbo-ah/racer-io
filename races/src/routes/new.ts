@@ -7,7 +7,7 @@
 
 import express , { Request , Response , NextFunction } from "express";
 import { body } from "express-validator";
-import {validateRequest ,  userStatus, RaceStatus} from "@racer-io/common";
+import {validateRequest ,  userStatus, RaceStatus, BadRequestError} from "@racer-io/common";
 import redis from "../redis";
 import { inRegion } from "../func/inRegion";
 import { UserData, UserDataString } from "../events/listeners/positionUpdatedListener";
@@ -45,7 +45,7 @@ router.post('/api/races/new' ,
         const exists2 = await redis.exists(friendId) ;
 
         if (!exists1 || !exists2) {
-            throw new Error('Couldnt find needed user positions') ; 
+            throw new BadRequestError('Couldnt find needed user positions') ; 
         }
         const result1String = await redis.hgetall(req.currentUser!.id)  as UserDataString ;
         const result1 : UserData = {
@@ -64,11 +64,11 @@ router.post('/api/races/new' ,
         // still didnt fix it but must add a check for if the user is already inside a race or not
         // need a fix in the redis database little and also the listeners and publishers events
         if (result1.userStatus !== userStatus.Idle || result2.userStatus !== userStatus.Idle) {
-            throw new Error('Cant create the race one of the users is already in a race') ;
+            throw new BadRequestError('Cant create the race one of the users is already in a race') ;
         }
 
         if (!inRegion(result1,startPos,MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME) || !inRegion(result2,startPos,MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME)) {
-            throw new Error('players are not at the right start position')
+            throw new BadRequestError('players are not at the right start position')
         }
         const race = Race.build({
             user1 : req.currentUser!.id ,
