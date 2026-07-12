@@ -14,11 +14,11 @@ export class RaceStartedListener extends Listener<RaceStartedEvent> {
         await redis.hset(`user:${data.userData.user1}` , {
             status : userStatus.InRace
         }) ;
-        await redis.hset(`user:${data.userData.user1}` , {
+        await redis.hset(`user:${data.userData.user2}` , {
             status : userStatus.InRace
         }) ;
 
-        io.to(data.userData.user1).emit('race_started' , data) ;
+        io.to(`user:${data.userData.user1}`).emit('race_started' , data) ;
         msg.ack() ;
     }
 }

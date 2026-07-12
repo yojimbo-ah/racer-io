@@ -17,7 +17,8 @@ export class RaceFinishedListener extends Listener<RaceFinishedEvent> {
             status : userStatus.Idle
         }) ;
 
-        io.to(`user:${data.userData.user1}`).emit('race_finished' , data) 
+        io.to(`user:${data.userData.user1}`).emit('race_finished' , data) ;
+        io.to(`user:${data.userData.user2}`).emit('race_finished' , data) ;
         msg.ack() ;
     }
 }
