@@ -14,7 +14,7 @@ export class RaceFinishedListener extends Listener <RaceFinishedEvent>{
             endingPos : data.race.endPosition ,
             startPos : data.race.startPos ,
             _id : data.race.raceId ,
-            raceStatus : RaceStatus.RaceCancelled ,
+            raceStatus : RaceStatus.RaceEnded ,
             winner : data.userData.winner
         })
         try {
