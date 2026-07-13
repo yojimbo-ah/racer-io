@@ -6,7 +6,7 @@ import PositionUpdatedPublisher from './events/publishers/PositionUpdatedPublish
 import { natsWrapper } from './nats-wrapper';
 import jwt from 'jsonwebtoken';
 import redis from './redis';
-
+import { positionUpdatedSocket } from './func/socket/positionUpdated';
 
 
 
@@ -66,26 +66,8 @@ export  const initSocket = (server : HttpServer) => {
     })
 
     // Listen for position updates from clients
-    socket.on('position:update', async (payload : PositionEventPayload) => {
-      try {
-        // will be used later so we can know users around the user who sent the request
-        // plus the users who are currently online
+    socket.on('position:update' , async (payload : PositionEventPayload) => await positionUpdatedSocket(payload , socket.userId) ) ;
 
-        await redis.geoadd('active:users' , payload.x , payload.y , socket.userId) ; // saving  everything into geaspatial group
-
-        new PositionUpdatedPublisher(natsWrapper.client).publish({
-          longitude : payload.x ,
-          latitude : payload.y ,
-          timestamp : payload.timestamp ,
-          userId : socket.userId ,
-        }) ;
-
-      } catch (err) {
-          console.log('updating position failed becauese of the current coardinates system we used')
-      }
-
-
-    });
 
     socket.on('disconnect', async () => {
       console.log(`[socket] Client disconnected: ${socket.id}`) ;
