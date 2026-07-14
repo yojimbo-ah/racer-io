@@ -1,5 +1,6 @@
-import type { PositionEventPayload , Position} from "@racer-io/common"
+import type { PositionEventPayload , Position } from "@racer-io/common"
 import PositionUpdatedPublisher from "../../events/publishers/PositionUpdatedPublisher"
+import AnomalyDetectedPublisher from "../../events/publishers/AnomalyDetectedPublisher";
 import redis from "../../redis";
 import { natsWrapper } from "../../nats-wrapper";
 import { time } from "node:console";
@@ -20,14 +21,13 @@ export const positionUpdatedSocket = async (payload : PositionEventPayload , use
     // we need to add a test for users if the gps is tweking or not 
     // or weither they are cheating so we will calulate there speec and compare it the 
     // the fastest human speed
-    const oldPos  = await redis.geopos('active:users' , userId) ;
-    const timestamp = await redis.hget(`user:${userId}` , 'timestamp') ;
-    if (oldPos && timestamp) {
+    const user = await redis.hgetall(`user:${userId}`) ;
+    if (user && Object.keys(user).length > 0) {
         // if there is no old payload then then this is the first time the user is logged in
         const pos : PositionStamp = {
-            longitude : Number(oldPos[0]) ,
-            latitude : Number(oldPos[1]) ,
-            timestamp 
+            longitude : Number(user.longitude) ,
+            latitude : Number(user.latitude) ,
+            timestamp : user.timestamp
         } ;
         const newPos : PositionStamp = {
             longitude : payload.x ,
@@ -39,13 +39,24 @@ export const positionUpdatedSocket = async (payload : PositionEventPayload , use
         // compare the speed 
         if (speed > FASTEST_HUMAN_SPEED) {
             // save the anomaly to either the mongodb or redis db 
+            new AnomalyDetectedPublisher(natsWrapper.client).publish({
+                reason : 'gps tweaking , or cheating' ,
+                timestamp : payload.timestamp ,
+                userId 
+            }) ;
+            // will upgrade the logique currently will keep it simple
+            return ;
         }
     } ;
-
-    await redis.geoadd('active:users' , payload.x , payload.y , userId) ; // saving  everything into geaspatial group
-    await redis.hset(`user:${userId}` , {
-        timestamp : payload.timestamp
+    const pipeline = redis.pipeline() ; // using pipeline so nothing is out of sync
+    pipeline.geoadd('active:users' , payload.x , payload.y , userId) ;
+    pipeline.hset(`user:${userId}` , {
+        timestamp : payload.timestamp ,
+        latitude : payload.y ,
+        longitude : payload.x
     }) ;
+    await pipeline.exec() ;
+
 
     new PositionUpdatedPublisher(natsWrapper.client).publish({
         longitude : payload.x ,

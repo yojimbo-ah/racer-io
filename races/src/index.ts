@@ -4,6 +4,7 @@ import { PositionUpdatedListener } from "./events/listeners/positionUpdatedListe
 import mongoose from "mongoose";
 import { UserCreatedListener } from "./events/listeners/userCreatedListener";
 import { UserUpdatedListener } from "./events/listeners/userUpdatedListener";
+import { AnomalyDetectedListener } from "./events/listeners/anomalyDetectedListener";
 import redis from "./redis";
 
 const connect = async () => {
@@ -45,7 +46,9 @@ const connect = async () => {
         .listen() ;
         new UserUpdatedListener(natsWrapper.client)
         .listen() ;
-
+        new AnomalyDetectedListener(natsWrapper.client)
+        .listen() ;
+        
         mongoose.connect(process.env.MONGO_URI) ;
         await redis.connect() ;
         app.listen(3000 , () => {
