@@ -5,6 +5,7 @@ import redis from "../../redis";
 import { natsWrapper } from "../../nats-wrapper";
 import { time } from "node:console";
 import { calculateSpeed, PositionStamp } from "../helper/length";
+import { positionRateLimiter } from "../../rate-limiters/positionRateLimiter";
 
 export type PositionString = {
     longitude : string ,
@@ -14,6 +15,13 @@ export type PositionString = {
 const FASTEST_HUMAN_SPEED = 9 // in m/s
 
 export const positionUpdatedSocket = async (payload : PositionEventPayload , userId : string) => {
+    try {
+        await positionRateLimiter.consume(userId) ;
+    } catch (err) {
+        console.log('reached the max updates per second') ;
+        return ;
+    }
+
     try {
     // will be used later so we can know users around the user who sent the request
     // plus the users who are currently online

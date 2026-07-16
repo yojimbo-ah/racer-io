@@ -35,6 +35,10 @@ The API gateway is the Kubernetes ingress in `infra/k8s/ingress-srv.yaml`. It is
 
 This keeps the browser talking to one public host while the backend remains split into isolated services. The browser loads the React app through the gateway, and the socket.io connection from the app is also proxied through the gateway to the positions service.
 
+Rate limited all the routes using ngress nginx for http requests , and for socket channel inside the positions service since it
+creates a direct TCP connection , the library https://www.npmjs.com/package/rate-limiter-flexible has been used with redis as
+the client for it
+
 ## Core Idea
 
 The app is built around live location tracking and race orchestration. A user signs up through the client, the positions service keeps track of where users are, and the races service decides whether a race can be created, accepted, started, and finished and aslo works as archive currently (will be seperated to two services in the future).

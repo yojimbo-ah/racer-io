@@ -1,15 +1,22 @@
+# ---- Positions (Socket.io — needs websocket support + rate limiting) ----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-srv
+  name: positions-ingress
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/websocket-services: "positions-srv"
+    nginx.ingress.kubernetes.io/limit-rps: "5"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
 spec:
   ingressClassName: nginx
+  tls:
+    - secretName: ticket-com-tls
+      hosts:
+        - ticket.com
   rules:
     - host: ticket.com
       http:
@@ -19,7 +26,7 @@ spec:
             backend:
               service:
                 name: positions-srv
-                port: 
+                port:
                   number: 3000
           - path: /socket.io/?(.*)
             pathType: ImplementationSpecific
@@ -28,13 +35,55 @@ spec:
                 name: positions-srv
                 port:
                   number: 3000
+---
+# ---- Auth (strict — brute force / credential stuffing risk) ----
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: auth-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rpm: "5"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: ticket-com-tls
+      hosts:
+        - ticket.com
+  rules:
+    - host: ticket.com
+      http:
+        paths:
           - path: /api/users/?(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: auth-srv
-                port: 
+                port:
                   number: 3000
+---
+# ---- Races ----
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: races-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "30"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: ticket-com-tls
+      hosts:
+        - ticket.com
+  rules:
+    - host: ticket.com
+      http:
+        paths:
           - path: /api/races/?(.*)
             pathType: ImplementationSpecific
             backend:
@@ -42,24 +91,56 @@ spec:
                 name: races-srv
                 port:
                   number: 3000
+---
+# ---- Archive ----
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: archive-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: ticket-com-tls
+      hosts:
+        - ticket.com
+  rules:
+    - host: ticket.com
+      http:
+        paths:
           - path: /api/archive/?(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: archive-srv
                 port:
-                  number: 3000  
-          # this is for nextjs handeling it always at the end
-          # handles all the routes that doesnt match the first
-          # routes
-          - path : /?(.*)
-            pathType: ImplementationSpecific
-            backend: 
-              service:
-                name: client-srv
-                port:
-                  number: 80
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: client-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+spec:
+  ingressClassName: nginx
   tls:
     - secretName: ticket-com-tls
       hosts:
         - ticket.com
+  rules:
+    - host: ticket.com
+      http:
+        paths:
+          - path: /?(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: client-srv
+                port:
+                  number: 80
