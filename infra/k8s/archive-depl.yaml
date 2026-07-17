@@ -15,6 +15,18 @@ spec:
     spec:
       containers:
         - name: archive
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
           image: ahmed0ahmed/racer-archive
           imagePullPolicy : Never
           env: 

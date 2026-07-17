@@ -15,6 +15,18 @@ spec:
     spec:
       containers:
         - name: positions
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
           image: ahmed0ahmed/racer-positions
           imagePullPolicy : Never
           env: 

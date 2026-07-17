@@ -4,6 +4,8 @@ import {NotFoundError , errorHandler , currentUser , requireAuth , RaceStatus, u
 import { newRouter } from "./routes/new";
 import { acceptRaceRequestRouter } from "./routes/acceptRaceRequest";
 import { getRacesRouter } from "./routes/getRaces";
+import { healthzRouter } from "./routes/healthz";
+import { readyzRouter } from "./routes/readyz";
 import { getRaces , getRace , getUserPosition } from "./func/helper/race-functions";
 import { distanceBetween } from "./func/inRegion";
 import Race from "./models/race-model";
@@ -23,6 +25,9 @@ app.use(requireAuth) ;
 app.use(newRouter) ;
 app.use(acceptRaceRequestRouter) ;
 app.use(getRacesRouter) ;
+app.use(readyzRouter) ;
+app.use(healthzRouter) ;
+
 
 // now we have to create a mechanisam that check for running races
 // and check the two players is one of them close to either position
