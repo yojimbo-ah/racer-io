@@ -17,6 +17,7 @@ spec:
       containers:
         - name: auth-mongo
           image: mongo:latest
+          imagePullPolicy : IfNotPresent
           args: ["--wiredTigerCacheSizeGB", "0.25"]  # ✅ limits mongo cache to 100MB
           resources:
             requests:

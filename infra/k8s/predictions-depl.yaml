@@ -2,20 +2,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: archive-depl
+  name: predictions-depl
 spec:
   replicas: 1
   selector:
     matchLabels: 
-      app: archive
+      app: predictions
   template: 
     metadata:
       labels:
-        app: archive
+        app: predictions
     spec:
       containers:
-        - name: archive
-          image: ahmed0ahmed/racer-archive
+        - name: predictions
+          image: ahmed0ahmed/racer-predictions
           imagePullPolicy : Never
           env: 
             - name: NATS_CLUSTER_ID
@@ -26,13 +26,13 @@ spec:
                   fieldPath: metadata.name
             - name: NATS_URL
               value: 'nats://nats-srv:4222'
-            - name: MONGO_URI
-              value: 'mongodb://archive-mongo-srv:27017/archive'
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:
                   name: jwt-secret
                   key: JWT_KEY
+            - name: REDIS_HOST
+              value: positions-redis-srv
 ---
 #kubernets service cluesterip so we can acess the pod
 #default service is clusterip service that why we didint have to
@@ -40,12 +40,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata: 
-  name: archive-srv
+  name: predictions-srv
 spec: 
   selector:
-    app: archive
+    app: predictions
   ports:
-    - name: archive
+    - name: predictions
       protocol: TCP
-      port: 3000
-      targetPort: 3000
+      port: 8000
+      targetPort: 8000
