@@ -23,4 +23,5 @@ npm-debug.log*
 # Kubernetes secrets (be careful)
 **/secrets.yaml
 
+**/cert
 /common
