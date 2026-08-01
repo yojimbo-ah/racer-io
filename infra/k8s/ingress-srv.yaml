@@ -1,16 +1,13 @@
-# ---- Positions (Socket.io — needs websocket support + rate limiting) ----
+# ---- Positions REST API (rate-limited) ----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: positions-ingress
+  name: positions-api-ingress
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/websocket-services: "positions-srv"
-    nginx.ingress.kubernetes.io/limit-rps: "5"
-    nginx.ingress.kubernetes.io/limit-connections: "20"
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
 spec:
   ingressClassName: nginx
   tls:
@@ -28,6 +25,28 @@ spec:
                 name: positions-srv
                 port:
                   number: 3000
+---
+# ---- Socket.io (no aggressive rate limiting — persistent/streaming traffic) ----
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: positions-socket-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "positions-srv"
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: ticket-com-tls
+      hosts:
+        - ticket.com
+  rules:
+    - host: ticket.com
+      http:
+        paths:
           - path: /socket.io/?(.*)
             pathType: ImplementationSpecific
             backend:
