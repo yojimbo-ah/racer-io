@@ -3,14 +3,19 @@ name = "predictions"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.9,<3.10"
 dependencies = [
     "asyncio-nats-streaming>=0.4.0",
-    "fastapi>=0.141.1",
+    "fastapi<0.129.0",
     "protobuf<3.21",
-    "torch>=2.13.0",
-    "uvicorn>=0.52.0",
+    "torch<2.6.0",
+    "uvicorn<0.35.0",
 ]
 
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
 [[tool.uv.index]]
+name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
+explicit = true

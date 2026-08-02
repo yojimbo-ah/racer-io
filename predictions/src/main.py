@@ -4,34 +4,25 @@ from contextlib import asynccontextmanager
 import torch, json
 from src.app.nats_client import nc, sc, connect, close
 
-"""""
-after creating the model we will use it right here
 
-model = torch.load("model.pt")
-model.eval()
+
+
 
 async def on_position_update(msg):
     data = json.loads(msg.data)
-    x = torch.tensor([[data["age"], data["gender"], data["num_previous_races"], data["avg_speed"]]])
-    with torch.no_grad():
-        prob = model(x).item()
-
-    await sc.publish("prediction.updated", json.dumps({
-        "raceId": data["raceId"],
-        "userId": data["userId"],
-        "winProbability": prob
-    }).encode())
+    print('event has been published sucuffuly from the prediction service')
+    print(data)
 
     
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect()
-    await sc.subscribe("position.updated", cb=on_position_update, durable_name="prediction-service-durable")
+    sub = await sc.subscribe("race:started", cb=on_position_update, durable_name="prediction-service-durable")
+    print(f"Subscribed successfully: {sub}")
     yield
     await close()
-"""
-    
-app = FastAPI()
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/health")
 def health():

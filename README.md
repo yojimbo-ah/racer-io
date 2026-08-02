@@ -51,6 +51,7 @@ The app is built around live location tracking and race orchestration. A user si
 - `archive`: receives user postions and races , doesnt emit any events currently.
 - `races`: creates race records, handles acceptance, tracks active races, and marks them finished.
 - `common`: shared events, middleware, enums, and error helpers : https://www.npmjs.com/package/@racer-io/common
+- `predictions`: Fast api python server will be running a prediction model ( multi layer perceptron) trained on marathon data : https://www.kaggle.com/datasets/aiaiaidavid/the-big-dataset-of-ultra-marathon-running
 - `infra`: Kubernetes manifests and ingress configuration for local or cluster deployment.
 
 The services are intentionally split so each one owns its own data and responsibility:
@@ -72,12 +73,13 @@ The `skaffold.yaml` file builds and syncs the four app containers:
 
 The `infra/k8s` folder wires the runtime pieces together:
 
-- `ingress-srv.yaml` is the API gateway. It exposes the app on `ticket.com` and routes `/api/users`, `/api/positions`, `/api/races`, `/socket.io`, and the client root path.
+- `ingress-srv.yaml` is the API gateway. It exposes the app on `ticket.com` and routes `/api/users`, `/api/positions`, `/api/races`, `/api/predictions` , `/socket.io`, and the client root path.
 - `auth-depl.yaml` runs the auth service with its own MongoDB and NATS.
 - `positions-depl.yaml` runs the positions service with its own Redis and NATS.
 - `races-depl.yaml` runs the races service with its own MongoDB, its own Redis, and NATS.
 - `archive-depl.yaml` runs the archive service with its own MongoDb , and NATS
 - `client-depl.yaml` serves the React app.
+- `predictions-depl.yaml` runs the predictions service and serves the prediction model.
 - `nats-depl.yaml` provides the event bus used for inter-service communication.
 
 Each service owns its own storage. The databases and Redis instances are not shared between services.
@@ -95,7 +97,7 @@ Events are sent through NATS so services can react to state changes without bein
 - `race:started`: published by races after a race is accepted, consumed by positions to update socket state and user status.
 - `race:cancelled`: published by races when a race is rejected, consumed by positions to notify the waiting user.
 - `race:finished`: published by races when a winner is detected, consumed by positions to reset users back to idle.
-
+- working on new events for the predictions service
 ### Event Flow
 
 1. The client sends a signup request to the auth service.
@@ -195,6 +197,7 @@ sequenceDiagram
   participant P as Positions
   participant R as Races
   participant H as Archive
+  participant W as Predictions 
 
   U->>G: Open the app in the browser
   G->>C: Serve the React app
@@ -209,6 +212,10 @@ sequenceDiagram
   R->>R: Validate radius and track race state
   R->>G: Publish race started / cancelled / finished updates
   G->>C: Deliver updates to the React app
+
+  G->>W: Delivers the race started event
+  W->>G: Publishes the prediction updated event
+  
 ```
 
 ## Position Update flow

@@ -7,8 +7,13 @@ nc = NATS()
 sc = STAN()
 
 async def connect():
-    await nc.connect(servers=["nats://nats-server:4222"])  # match your k8s service name
-    await sc.connect("test-cluster", "prediction-service", nats=nc)  # cluster id from your existing NATS Streaming setup
+    print("Attempting NATS connect...")
+    await nc.connect(servers=["nats://nats-srv:4222"])
+    print(f"NATS connected: {nc.is_connected}")
+
+    print("Attempting STAN connect...")
+    await sc.connect("racer.io", "prediction-service", nats=nc)
+    print(f"STAN connected, internal nc set: {sc._nc is not None}")
 
 async def close():
     await sc.close()
