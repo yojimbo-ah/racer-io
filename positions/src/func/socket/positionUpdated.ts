@@ -1,18 +1,23 @@
 import type { PositionEventPayload , Position } from "@racer-io/common"
 import PositionUpdatedPublisher from "../../events/publishers/PositionUpdatedPublisher"
-import AnomalyDetectedPublisher from "../../events/publishers/AnomalyDetectedPublisher";
 import redis from "../../redis";
 import { natsWrapper } from "../../nats-wrapper";
-import { time } from "node:console";
-import { calculateSpeed, PositionStamp } from "../helper/length";
 import { positionRateLimiter } from "../../rate-limiters/positionRateLimiter";
-
+import { anomalyDetection } from "../helper/anomalyDetection";
 export type PositionString = {
     longitude : string ,
     latitude : string
 } ;
 
-const FASTEST_HUMAN_SPEED = 9 // in m/s
+// need to improve the cheeting detecting algorithm and attatch it to redis 
+// will work on it on the future 
+
+// the algorithm will keep the last 4 positions in the database and each 
+// time will see if there is anomaly between them and save the anomaly count in
+// expiry field inside a hset after that and if we reach a high number of 
+// anomalys in small intervall then we will detect cheater 
+
+// and publish a cheater detected event for other services
 
 export const positionUpdatedSocket = async (payload : PositionEventPayload , userId : string) => {
     try {
@@ -29,35 +34,17 @@ export const positionUpdatedSocket = async (payload : PositionEventPayload , use
     // we need to add a test for users if the gps is tweking or not 
     // or weither they are cheating so we will calulate there speec and compare it the 
     // the fastest human speed
-    const user = await redis.hgetall(`user:${userId}`) ;
-    if (user && Object.keys(user).length > 0) {
-        // if there is no old payload then then this is the first time the user is logged in
-        const pos : PositionStamp = {
-            longitude : Number(user.longitude) ,
-            latitude : Number(user.latitude) ,
-            timestamp : user.timestamp
-        } ;
-        const newPos : PositionStamp = {
-            longitude : payload.x ,
-            latitude : payload.y ,
-            timestamp : payload.timestamp
-        } 
-        // calculate the speed and check the logique 
-        const speed = calculateSpeed(pos , newPos) ;
-        // compare the speed 
-        if (speed > FASTEST_HUMAN_SPEED) {
-            // save the anomaly to either the mongodb or redis db 
-            new AnomalyDetectedPublisher(natsWrapper.client).publish({
-                reason : 'gps tweaking , or cheating' ,
-                timestamp : payload.timestamp ,
-                userId 
-            }) ;
-            // will upgrade the logique currently will keep it simple
-            return ;
-        }
-    } ;
+    await anomalyDetection(userId , payload.timestamp) ;
+
+    const stringPayload = JSON.stringify({
+        timestamp : payload.timestamp ,
+        latitude : payload.y ,
+        longitude : payload.x
+    })
     const pipeline = redis.pipeline() ; // using pipeline so nothing is out of sync
     pipeline.geoadd('active:users' , payload.x , payload.y , userId) ;
+    pipeline.lpush(`raceinterval:${userId}` , stringPayload) ; // used for anomaly cheacking later
+    pipeline.ltrim(`raceinterval:${userId}` , 0 , 4) ; // trims and keeps only the last 5 postions with there timestamps
     pipeline.hset(`user:${userId}` , {
         timestamp : payload.timestamp ,
         latitude : payload.y ,

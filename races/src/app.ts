@@ -1,21 +1,15 @@
 import express from "express" ;
 import 'express-async-errors';
-import {NotFoundError , errorHandler , currentUser , requireAuth , RaceStatus, userStatus} from "@racer-io/common"
+import {NotFoundError , errorHandler , currentUser , requireAuth} from "@racer-io/common"
 import { newRouter } from "./routes/new";
 import { acceptRaceRequestRouter } from "./routes/acceptRaceRequest";
 import { getRacesRouter } from "./routes/getRaces";
 import { healthzRouter } from "./routes/healthz";
 import { readyzRouter } from "./routes/readyz";
-import { getRaces , getRace , getUserPosition } from "./func/helper/race-functions";
-import { distanceBetween } from "./func/inRegion";
-import Race from "./models/race-model";
-import { RaceFinishedPublisher } from "./events/publishers/raceEndedPublisher";
-import { natsWrapper } from "./nats-wrapper";
-import redis from "./redis";
 import raceEngine from "./func/helper/race-engine";
 
 const TIME_BETWEEN_RACES_CHECKS = 20000 // 20S
-const RADIUS_TO_FINISH_POINT = 200 ; // this metric is in meters 
+
 
 const app = express() ;
 

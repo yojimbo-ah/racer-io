@@ -6,7 +6,6 @@ import Race from "../../models/race-model";
 import { RaceStatus , userStatus } from "@racer-io/common";
 import redis from "../../redis";
 
-const TIME_BETWEEN_RACES_CHECKS = 20000 // 20S
 const RADIUS_TO_FINISH_POINT = 200 ; // this metric is in meters 
 
 const raceEngine = async (checking : boolean) : Promise<void> => {
