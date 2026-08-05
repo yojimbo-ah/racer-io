@@ -15,7 +15,7 @@ export const anomalyDetection = async (userId : string , timestamp: string) : Pr
     }
     const mean_speeds = mean_speed_interval.map(r => JSON.parse(r) as PositionStamp) ;
     let speed = 0 ;
-    for (let i = 0 ; i++ ; i < mean_speeds.length) {
+    for (let i = 0 ; i++ ; i < mean_speeds.length - 1) {
         const avgSpeed = calculateSpeed(mean_speeds[i+1] , mean_speeds[i]) ;
         speed += avgSpeed ;
     }
@@ -25,6 +25,7 @@ export const anomalyDetection = async (userId : string , timestamp: string) : Pr
     if (mean_speed < FASTEST_HUMAN_SPEED) {
         return ;
     }
+
     new AnomalyDetectedPublisher(natsWrapper.client).publish({
         timestamp : timestamp ,
         userId : userId ,

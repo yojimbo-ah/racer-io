@@ -13,7 +13,6 @@ interface UserModel extends Model<UserDocument> {
 interface UserDocument extends Document {
     userName : string ,
     email : string ,
-    anomaly : number
 } ;
 const userSchema = new mongoose.Schema({
     userName : {
@@ -28,10 +27,6 @@ const userSchema = new mongoose.Schema({
         type : String ,
         required : true ,
         ref : 'User'
-    } ,
-    anomaly : {
-        type : Number ,
-        default : 0 
     }
 } ,  {
     toJSON: {

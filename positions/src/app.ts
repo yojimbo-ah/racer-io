@@ -1,10 +1,14 @@
 import express from "express" ;
 import 'express-async-errors';
 import { errorHandler , NotFoundError , requireAuth , currentUser} from "@racer-io/common" ;
-import redis from "./redis";
 import { getUsersAroundMe } from "./routes/getUsersAroundMe";
 import { readyzRouter } from "./routes/readyz";
 import { healthzRouter } from "./routes/healthz";
+
+// races is not hoked to a mongodb databse ,
+// it used for edge computing and filtering and init the channels for
+// other users and services and track the state of the user
+// it doesnt own any type of data
 
 const app = express() ;
 

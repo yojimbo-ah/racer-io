@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
     password : {
         type : String ,
         required : true ,
+    } ,
+    under_supervision : {
+        type : Boolean ,
+        default : false
     }
 }, {
     toJSON: {
