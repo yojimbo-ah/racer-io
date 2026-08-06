@@ -1,10 +1,19 @@
 import express , {Request , Response} from "express" ;
 import { body } from "express-validator";
-import { BadRequestError , validateRequest } from "@racer-io/common"
+import { BadRequestError , validateRequest , UserPayload , AccessPayload } from "@racer-io/common"
 import { UserCreatedPublisher } from "../events/publishers/userCreatedPublisher";
 import User  from "../models/user-model";
 import jwt from "jsonwebtoken";
 import { natsWrapper } from "../nats-wrapper";
+
+// will use the refrech token method later 
+// that to reduce query time specilly in race service
+// since now am using a normal token login i cant rely on it to see if 
+// the user is under supervision or not , 
+
+// but with the double refresh token method it would make it easy to rely on it
+// and also there is no query time also and the other services that doenst know 
+// anything about the user model still rely on the token 
 
 const router = express.Router() ;
 
@@ -37,15 +46,29 @@ router.post('/api/users/signup' ,
         // exlamation mark means tells typescrips to not to worry about the 
         // type of JWT_KEY since we already vderified that is it existing and sicne it 
         // a string or undefined then it is a string
-        const userJwt = jwt.sign({email : email , id : user._id}, process.env.JWT_KEY!)
-        req.session = {
-            jwt : userJwt
-        }
+
         await new UserCreatedPublisher(natsWrapper.client).publish({
             email , userId : user._id.toString() , userName
         }) ;
         
-        res.status(201).json({user : user , token : userJwt}) ;
+        const accessPayload : AccessPayload = {
+            email : user.email ,
+            id : user._id.toString()
+        }
+        const userPayload : UserPayload = {
+            email : user.email ,
+            id : user._id.toString() ,
+            underSupervision : user.under_supervision ,
+            reasonSupervision : user.reason_supervision
+        }
+        const accessToken = jwt.sign(accessPayload, process.env.ACCESS_JWT_KEY!)
+        const refreshToken = jwt.sign(userPayload, process.env.JWT_KEY!) ;
+        
+        req.session = {
+            jwt : refreshToken
+        }
+
+        res.status(201).json({user : user , token : refreshToken , accessToken}) ;
 })
 
 export {router as signUpRouter} ;

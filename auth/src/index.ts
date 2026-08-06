@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import app from "./app";
 import { natsWrapper } from "./nats-wrapper";
+import { CheaterDetectedListener } from "./events/listeners/cheaterDetectedListener";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -9,6 +10,9 @@ const connect = async () => {
     // hello world  
     if (!process.env.JWT_KEY || !process.env.MONGO_URI) {
         throw new Error('JWT_KEY or MONGO_URI not diffined') ;
+    }
+    if (!process.env.ACCESS_JWT_KEY) {
+        throw Error('ACESS_JWT_KEY is not defined') ;
     }
     if (!process.env.NATS_URL) {
         throw new Error('NATS connection url not dffined') ;
@@ -33,6 +37,9 @@ const connect = async () => {
 
         process.on('SIGINT' , () => natsWrapper.client.close()) ;
         process.on('SIGTERM' , () => natsWrapper.client.close()) ;
+
+        new CheaterDetectedListener(natsWrapper.client).listen() ;
+
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;
         })

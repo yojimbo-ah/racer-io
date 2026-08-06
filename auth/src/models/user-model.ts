@@ -17,6 +17,8 @@ interface UserModel extends Model<UserDocument> {
 interface UserDocument extends Document {
     email : string ;
     password : string ;
+    under_supervision : boolean ;
+    reason_supervision ?: string
 }
 
 const userSchema = new mongoose.Schema({
@@ -32,6 +34,10 @@ const userSchema = new mongoose.Schema({
     under_supervision : {
         type : Boolean ,
         default : false
+    } ,
+    reason_supervision : {
+        type : String ,
+        required : false
     }
 }, {
     toJSON: {

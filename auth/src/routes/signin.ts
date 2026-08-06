@@ -1,6 +1,6 @@
 import express , {Request , Response} from "express" ;
 import { body } from "express-validator";
-import { validateRequest , BadRequestError} from "@racer-io/common";
+import { validateRequest , BadRequestError , UserPayload , AccessPayload} from "@racer-io/common";
 import jwt from "jsonwebtoken" ;
 import { Password } from "../services/password";
 import User from "../models/user-model";
@@ -27,12 +27,24 @@ router.post('/api/users/signin' ,
         if (!passwordCompare) {
             throw new BadRequestError('Invalid user password') ;
         }
-        
-        const userJwt = jwt.sign({email : email , id : user._id}, process.env.JWT_KEY!)
-        req.session = {
-            jwt : userJwt
+        const accessPayload : AccessPayload = {
+            email : user.email ,
+            id : user.id
         }
-        res.status(201).json({user : user , token : userJwt}) ;
+        const userPayload : UserPayload = {
+            email : user.email ,
+            id : user.id ,
+            underSupervision : user.under_supervision ,
+            reasonSupervision : user.reason_supervision
+        }
+        const accessToken = jwt.sign(accessPayload, process.env.ACCESS_JWT_KEY!)
+        const refreshToken = jwt.sign(userPayload, process.env.JWT_KEY!) ;
+        
+        req.session = {
+            jwt : refreshToken
+        }
+
+        res.status(201).json({user : user , token : refreshToken , accessToken}) ;
 })
 
 export {router as signInRouter} ;

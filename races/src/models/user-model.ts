@@ -13,6 +13,8 @@ interface UserModel extends Model<UserDocument> {
 interface UserDocument extends Document {
     userName : string ,
     email : string ,
+    under_supervision : boolean ,
+    reason_supervision ?: string
 } ;
 const userSchema = new mongoose.Schema({
     userName : {
@@ -27,6 +29,14 @@ const userSchema = new mongoose.Schema({
         type : String ,
         required : true ,
         ref : 'User'
+    } ,
+    under_supervision : {
+        type : Boolean ,
+        default : false
+    } ,
+    reason_supervision : {
+        type : String ,
+        required : false
     }
 } ,  {
     toJSON: {

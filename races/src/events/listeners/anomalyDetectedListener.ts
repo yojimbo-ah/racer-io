@@ -6,6 +6,7 @@ import Anomaly from "../../models/anomaly-model";
 import CheaterDetectedPublisher from "../publishers/cheaterDetectedPublisher";
 import { natsWrapper } from "../../nats-wrapper";
 
+const WEEK_TIME = 7 * 24 * 60 * 60 * 1000
 const ANOMALY_COUNT_BEFORE_DESACTIVATE = 5 ;
 
 export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
@@ -19,7 +20,7 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
             throw new Error('Couldnt find the user') ;
         } ;
         const weekAgo = new Date(
-            Date.now() - 7 * 24 * 60 * 60 * 1000
+            Date.now() - WEEK_TIME
         );
 
         const count = await Anomaly.countDocuments({
@@ -33,6 +34,9 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
             // still didnt create it 
             // and save the user in this service as cheater also 
             new CheaterDetectedPublisher(natsWrapper.client).publish(data) ;
+            user.reason_supervision = 'Using unreal human speed' ;
+            user.under_supervision = true ;
+            await user.save() ;
         } ;
 
         if (count > ANOMALY_COUNT_BEFORE_DESACTIVATE) {
