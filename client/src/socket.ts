@@ -2,7 +2,7 @@ import { io, type Socket } from 'socket.io-client'
 import { type PositionSnapshot, type PositionEventPayload } from './types'
 export type {PositionSnapshot , PositionEventPayload} ;
 
-export const createPositionSocket = (serverUrl: string , token : string): Socket => {
+export const createPositionSocket = (serverUrl: string, refreshToken: string): Socket => {
   // Determine if we're connecting via relative path (ingress) or full URL
   const isRelativePath = serverUrl.startsWith('/')
   
@@ -14,7 +14,7 @@ export const createPositionSocket = (serverUrl: string , token : string): Socket
       autoConnect: true,
       reconnection: true,
       path: '/socket.io/',
-      auth : {token}
+      auth: { token: refreshToken }
     })
   } else {
     // For direct localhost connections
@@ -22,7 +22,7 @@ export const createPositionSocket = (serverUrl: string , token : string): Socket
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
-      auth : {token}
+      auth: { token: refreshToken }
     })
   }
 }

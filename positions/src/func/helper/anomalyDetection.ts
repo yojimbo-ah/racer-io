@@ -31,6 +31,10 @@ export const anomalyDetection = async (userId : string , timestamp: string) : Pr
         userId : userId ,
         reason : 'speed of the user is not quite right currently'
     }) ;
+    // reset the interval of the speeds so it doesnt trigger 
+    // again in case of acciedent
+    await redis.ltrim(`raceinterval:${userId}` , 0 , 0) ;
+
     // for now no error is being thrown it just detection the system will 
     // improve over time
     return ;

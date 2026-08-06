@@ -50,7 +50,7 @@ const headingFromCoords = (lat1: number, lng1: number, lat2: number, lng2: numbe
 }
 
 export const Dashboard = () => {
-  const { user, logout, getToken } = useAuth()
+  const { user, logout, getRefreshToken } = useAuth()
 
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
   const [lastSentAt, setLastSentAt] = useState<string>('Waiting for first emit')
@@ -72,7 +72,7 @@ export const Dashboard = () => {
       const response = await fetch(`${getApiUrl()}/api/positions/aroundme`, {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${getToken()}`,
+          Authorization: `Bearer ${getRefreshToken()}`,
         },
       })
 
@@ -95,7 +95,7 @@ export const Dashboard = () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
+          Authorization: `Bearer ${getRefreshToken()}`,
       },
       body: JSON.stringify({ raceId, accept }),
     })
@@ -127,7 +127,7 @@ export const Dashboard = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${getToken()}`,
+          Authorization: `Bearer ${getRefreshToken()}`,
         },
         body: JSON.stringify({
           friendId: selectedOpponent,
@@ -153,7 +153,7 @@ export const Dashboard = () => {
   }
 
   useEffect(() => {
-    const socket = createPositionSocket(serverUrl, getToken())
+    const socket = createPositionSocket(serverUrl, getRefreshToken())
     socketRef.current = socket
 
     socket.on('connect', () => {
@@ -195,7 +195,7 @@ export const Dashboard = () => {
       socket.close()
       socketRef.current = null
     }
-  }, [getToken])
+  }, [getRefreshToken])
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -251,7 +251,7 @@ export const Dashboard = () => {
     }, 20000)
 
     return () => window.clearInterval(intervalId)
-  }, [getToken])
+  }, [getRefreshToken])
 
   const connectionTone = {
     connecting: 'yellow',

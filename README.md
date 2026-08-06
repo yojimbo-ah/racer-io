@@ -10,7 +10,7 @@ To run the app locally you need:
 - kubectl
 - Skaffold
 - a local Kubernetes cluster such as Docker Desktop Kubernetes, minikube, or kind
-- a `jwt-secret` Kubernetes secret with `JWT_KEY`
+- a `jwt-secret` Kubernetes secret with both `JWT_KEY` and `ACCESS_JWT_KEY`
 - a `ticket-com-tls` TLS secret for the ingress host `ticket.com`
 
 You also need `ticket.com` to resolve to your local ingress IP in your hosts file.

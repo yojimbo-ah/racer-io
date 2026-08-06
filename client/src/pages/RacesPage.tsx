@@ -28,7 +28,7 @@ const getApiUrl = () => {
 const formatPoint = (point: RacePoint) => `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`
 
 export const RacesPage = () => {
-  const { user, getToken } = useAuth()
+  const { user, getRefreshToken } = useAuth()
   const [races, setRaces] = useState<RaceRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -41,7 +41,7 @@ export const RacesPage = () => {
 
         const response = await fetch(`${getApiUrl()}/api/races`, {
           headers: {
-            Authorization: `Bearer ${getToken()}`,
+            Authorization: `Bearer ${getRefreshToken()}`,
           },
         })
 
@@ -59,7 +59,7 @@ export const RacesPage = () => {
     }
 
     void loadRaces()
-  }, [getToken])
+  }, [getRefreshToken])
 
   return (
     <div className="races-page">
