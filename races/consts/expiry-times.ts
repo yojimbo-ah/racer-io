@@ -1,0 +1,3 @@
+export const RACE_AWAIT_EXPIRY_TIME = 2 * 60
+export const RACE_STARTED_EXPIRY_TIME = 2 * 60 * 60
+export const RACE_USER_STATE_EXPIRY_TIME = 2 * 60 * 60

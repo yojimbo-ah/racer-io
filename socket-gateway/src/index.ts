@@ -1,12 +1,14 @@
 import app from "./app";
 import process from "process";
 import { natsWrapper } from "./nats-wrapper";
+import { initSocket } from "./socket.io";
 import http from "http"
 import redis from "./redis";
-import { RaceStartedListener } from "./events/listeners/raceStartedListener";
-import { RaceFinishedListener } from "./events/listeners/raceFinishedListener";
+import { RaceAwaitingListener } from "./events/listeners/raceAwaitingListener";
 import { RaceCancelledListener } from "./events/listeners/raceCancelledListener";
-import { PositionUpdatedSocketListener } from "./events/listeners/positionUpdatedSocketListener";
+import { RaceFinishedListener } from "./events/listeners/raceFinishedListener";
+import { RaceStartedListener } from "./events/listeners/raceStartedListener";
+
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -52,12 +54,13 @@ const connect = async () => {
         process.on('SIGINT' , () => natsWrapper.client.close()) ;
         process.on('SIGTERM' , () => natsWrapper.client.close()) ;
 
-        new RaceFinishedListener(natsWrapper.client).listen() ;
-        new RaceStartedListener(natsWrapper.client).listen() ;
+        new RaceAwaitingListener(natsWrapper.client).listen() ;
         new RaceCancelledListener(natsWrapper.client).listen() ;
-        new PositionUpdatedSocketListener(natsWrapper.client).listen() ;
+        new RaceStartedListener(natsWrapper.client).listen() ;
+        new RaceFinishedListener(natsWrapper.client).listen() ;
 
         const server = http.createServer(app) ;
+        initSocket(server) ;
         const port = Number(process.env.PORT) || 3000;
 
         server.listen(port , () => {

@@ -9,6 +9,7 @@ import { RaceCancelledPublisher } from "../publishers/RaceCancelledPublisher";
 import { natsWrapper } from "../../nats-wrapper";
 import redis from "../../redis";
 import { RaceRedis } from "../../func/helper/race-functions";
+import { RACE_USER_STATE_EXPIRY_TIME } from "../../../consts/expiry-times";
 
 const WEEK_TIME = 7 * 24 * 60 * 60 * 1000
 const ANOMALY_COUNT_BEFORE_DESACTIVATE = 5 ;
@@ -17,8 +18,6 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
     subject = Subjects.AnomalyDetected as const ;
     queueGroupName = queueGroupName ;
     async onMessage(data: AnomalyDetectedEvent['data'] , msg: Message): Promise<void> {
-        // still dont know what to do when anomaly is triggered
-        // currently is just a anomaly counter it simple setup
         const user = await User.findById(data.userId) ;
         if (!user) {
             throw new Error('Couldnt find the user') ;
@@ -37,7 +36,6 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
             // Cheater detected
 
             // publish cheater detected event
-            // still didnt create it 
             // and save the user in this service as cheater also 
             new CheaterDetectedPublisher(natsWrapper.client).publish(data) ;
             user.reason_supervision = 'Using unreal human speed' ;
@@ -51,8 +49,10 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
             } else if (userStat === userStatus.awaitingRace) {
                 // case of waiting race we just cancel stop the race before it 
                 // starts
-                
-                // still didnt create it yet
+
+                // still didnt create it yet chance of happening
+                // very low 
+
 
             } else if (userStat === userStatus.InRace) {
                 // stop the race and save it in the databse as the race cancelled
@@ -69,6 +69,8 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
                 const pipeline = redis.pipeline() ;
                 pipeline.hset(race.user1 , {}) ;
                 pipeline.hset(race.user2 , {}) ;
+                pipeline.expire(race.user1 , RACE_USER_STATE_EXPIRY_TIME) ;
+                pipeline.expire(race.user2 , RACE_USER_STATE_EXPIRY_TIME) ;
                 pipeline.del(`race:started:${raceId}`) ;
                 pipeline.srem(`races:active` , raceId) ;
 

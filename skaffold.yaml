@@ -56,5 +56,12 @@ build:
         manual:
           - src: 'src/**/*.py'
             dest: .
- 
+    - image: ahmed0ahmed/racer-socket-gateway
+      context: predictions
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: 'src/**/*.ts'
+            dest: .
  

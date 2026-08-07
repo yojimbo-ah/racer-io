@@ -1,0 +1,2 @@
+export const POSITION_DATA_EXPIRY_TIME = 10 * 60
+export const RACE_INTERVAL_EXPIRY_TIME = 10 * 60

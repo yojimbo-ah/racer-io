@@ -5,6 +5,7 @@ import { natsWrapper } from "../../nats-wrapper";
 import Race from "../../models/race-model";
 import { RaceStatus , userStatus } from "@racer-io/common";
 import redis from "../../redis";
+import { RACE_USER_STATE_EXPIRY_TIME } from "../../../consts/expiry-times";
 
 const RADIUS_TO_FINISH_POINT = 200 ; // this metric is in meters 
 
@@ -68,7 +69,9 @@ const raceEngine = async (checking : boolean) : Promise<void> => {
                     // setting the status of the user to idle 
                     // after finishing the race
                     await redis.hset(race.user1 , {userStatus : userStatus.Idle , raceId : ''}) ;
+                    await redis.expire(race.user1 , RACE_USER_STATE_EXPIRY_TIME) ;
                     await redis.hset(race.user2 , {userStatus : userStatus.Idle , raceId : ''}) ;
+                    await redis.expire(race.user2 , RACE_USER_STATE_EXPIRY_TIME) ;
                     await redis.del(`race:started:${raceRecord._id.toString()}`) ;
                     await redis.srem('races:active' , raceRecord._id.toString()) ;
 

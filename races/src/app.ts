@@ -1,6 +1,6 @@
 import express from "express" ;
 import 'express-async-errors';
-import {NotFoundError , errorHandler , currentUser , requireAuth} from "@racer-io/common"
+import {NotFoundError , errorHandler , currentUser , requireAuth , underSupervision} from "@racer-io/common"
 import { newRouter } from "./routes/new";
 import { acceptRaceRequestRouter } from "./routes/acceptRaceRequest";
 import { getRacesRouter } from "./routes/getRaces";
@@ -17,6 +17,7 @@ app.set('trust proxy' , true) ;
 app.use(express.json()) ;
 app.use(currentUser) ;
 app.use(requireAuth) ;
+app.use(underSupervision) ;
 app.use(newRouter) ;
 app.use(acceptRaceRequestRouter) ;
 app.use(getRacesRouter) ;

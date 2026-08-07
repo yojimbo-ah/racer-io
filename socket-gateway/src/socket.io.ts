@@ -1,12 +1,10 @@
 import { Server } from 'socket.io';
 import type { Server as HttpServer } from 'http';
-import { PositionEventPayload , userStatus } from '@racer-io/common';
+import { PositionEventPayload, UserPayload } from '@racer-io/common';
 import process = require('node:process');
-import PositionUpdatedPublisher from './events/publishers/PositionUpdatedPublisher';
-import { natsWrapper } from './nats-wrapper';
 import jwt from 'jsonwebtoken';
-import redis from './redis';
 import { positionUpdatedSocket } from './func/socket/positionUpdated';
+
 
 
 
@@ -19,19 +17,12 @@ declare module "socket.io" {
     userId : string
   }
 }
-// will be sent to the comman library later
-export type jwtPayload = {
-  id : string 
-  email : string
-}
-
 
 let io: Server | undefined;
 
 export  const initSocket = (server : HttpServer) => {
   io = new Server(server, {
     // Socket.io listens at default /socket.io/ path
-    // The ingress routes both /socket.io/ and /api/positions/ to here
     cors: {
       origin:  '*'  ,
       methods: ['GET', 'POST' , 'PUT' , 'PATCH' , 'DELETE'] 
@@ -44,8 +35,13 @@ export  const initSocket = (server : HttpServer) => {
 
     const token = socket.handshake.auth.token ;
     try {
-      const payload = jwt.verify(token , process.env.JWT_KEY!) as jwtPayload ;
-    
+      // the user must be logged in into the account 
+      // has the refresh token (decrypt uisng JWT_KEY)
+      const payload = jwt.verify(token , process.env.JWT_KEY!) as UserPayload ;
+      // the user must not be under supervision 
+      if (payload.underSupervision) {
+        throw new Error('This user is under supervision') ;
+      }
       socket.userId = payload.id ;
       next() ;
     } catch (err) {
@@ -58,16 +54,11 @@ export  const initSocket = (server : HttpServer) => {
 
     // joining the users private room using the users is 
     socket.join(`user:${socket.userId}`) ;
-    
-    // saving the status of the user so it can be used later
-    
-    redis.hset(`user:${socket.userId}` , {
-      status : userStatus.Idle
-    })
 
-    // Listen for position updates from clients
-    socket.on('position:update' , async (payload : PositionEventPayload) => await positionUpdatedSocket(payload , socket.userId) ) ;
-
+    // still didnt fix the other listener in the races service or
+    // maybe id create a new publisher named with socket
+    // so it can be easily identified 
+    socket.on('position:update' , async (payload : PositionEventPayload) => positionUpdatedSocket(payload , socket.userId)) ;
 
     socket.on('disconnect', async () => {
       console.log(`[socket] Client disconnected: ${socket.id}`) ;

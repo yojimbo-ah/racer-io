@@ -5,6 +5,7 @@ import { UserCreatedPublisher } from "../events/publishers/userCreatedPublisher"
 import User  from "../models/user-model";
 import jwt from "jsonwebtoken";
 import { natsWrapper } from "../nats-wrapper";
+import { Expiration } from "../consts/jwt-access-time";
 
 // will use the refrech token method later 
 // that to reduce query time specilly in race service
@@ -61,8 +62,8 @@ router.post('/api/users/signup' ,
             underSupervision : user.under_supervision ,
             reasonSupervision : user.reason_supervision
         }
-        const accessToken = jwt.sign(accessPayload, process.env.ACCESS_JWT_KEY!)
-        const refreshToken = jwt.sign(userPayload, process.env.JWT_KEY!) ;
+        const accessToken = jwt.sign(accessPayload, process.env.ACCESS_JWT_KEY! , {expiresIn : Expiration.access})
+        const refreshToken = jwt.sign(userPayload, process.env.JWT_KEY! , {expiresIn : Expiration.refresh}) ;
         
         req.session = {
             jwt : refreshToken

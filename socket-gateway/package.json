@@ -1,5 +1,5 @@
 {
-  "name": "positions",
+  "name": "socket-gateway",
   "version": "1.0.0",
   "type": "commonjs",
   "scripts": {

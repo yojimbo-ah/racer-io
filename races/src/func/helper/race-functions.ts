@@ -1,6 +1,7 @@
 import { UserData, UserDataString } from "../../events/listeners/positionUpdatedListener";
 import redis from "../../redis"
 import Race from "../../models/race-model";
+import { RACE_STARTED_EXPIRY_TIME } from "../../../consts/expiry-times";
 
 
 export type RaceRedis = {
@@ -41,7 +42,7 @@ export const getRace = async (raceId : string) : Promise<RaceRedis> => {
         endingPos : raceRecord.endingPos,
     }
 
-    await redis.set(`race:started:${raceId}`, JSON.stringify(race), 'EX', 3600) ;
+    await redis.set(`race:started:${raceId}`, JSON.stringify(race), 'EX', RACE_STARTED_EXPIRY_TIME) ;
 
     return race ;
 }

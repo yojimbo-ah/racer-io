@@ -12,9 +12,8 @@ import Race from "../models/race-model";
 import { RaceStartedPublisher } from "../events/publishers/raceStartedPublisher";
 import { RaceCancelledPublisher } from "../events/publishers/RaceCancelledPublisher";
 import { natsWrapper } from "../nats-wrapper";
+import { RACE_STARTED_EXPIRY_TIME, RACE_USER_STATE_EXPIRY_TIME } from "../../consts/expiry-times";
 
-
-const RACE_EXPIRY_TIME = 360000 ; // 1 hour
 
 const router = express.Router() ;
 
@@ -50,7 +49,7 @@ router.post('/api/races/accept-race' ,
                     user2 : race.users[1] ,
                     startingPos : race.startPos ,
                     endingPos : race.endingPos 
-                }) , 'EX' , RACE_EXPIRY_TIME) ;
+                }) , 'EX' , RACE_STARTED_EXPIRY_TIME) ;
                 
                 // saving the race into the set of active races (so it can be treated later)
                 await redis.sadd('races:active' , race._id.toString()) ;
@@ -69,7 +68,9 @@ router.post('/api/races/accept-race' ,
                     }
                 }) ;
                 await redis.hset(race.users[0] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
+                await redis.expire(race.users[0] , RACE_USER_STATE_EXPIRY_TIME) ;
                 await redis.hset(race.users[1] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
+                await redis.expire(race.users[1] , RACE_USER_STATE_EXPIRY_TIME) ;
                     
                 res.status(200).json({message : "start running" , accepted : true})
             } else {

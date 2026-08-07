@@ -4,6 +4,7 @@ import { validateRequest , BadRequestError , UserPayload , AccessPayload} from "
 import jwt from "jsonwebtoken" ;
 import { Password } from "../services/password";
 import User from "../models/user-model";
+import { Expiration } from "../consts/jwt-access-time";
 const router = express.Router() ;
 
 router.post('/api/users/signin' , 
@@ -37,8 +38,8 @@ router.post('/api/users/signin' ,
             underSupervision : user.under_supervision ,
             reasonSupervision : user.reason_supervision
         }
-        const accessToken = jwt.sign(accessPayload, process.env.ACCESS_JWT_KEY!)
-        const refreshToken = jwt.sign(userPayload, process.env.JWT_KEY!) ;
+        const accessToken = jwt.sign(accessPayload, process.env.ACCESS_JWT_KEY! , {expiresIn : Expiration.access})
+        const refreshToken = jwt.sign(userPayload, process.env.JWT_KEY! , {expiresIn : Expiration.refresh}) ;
         
         req.session = {
             jwt : refreshToken

@@ -4,6 +4,7 @@ import redis from "../../redis";
 import { natsWrapper } from "../../nats-wrapper";
 import { positionRateLimiter } from "../../rate-limiters/positionRateLimiter";
 import { anomalyDetection } from "../helper/anomalyDetection";
+import { RACE_INTERVAL_EXPIRY_TIME } from "../../../consts/expiry-times";
 export type PositionString = {
     longitude : string ,
     latitude : string
@@ -45,6 +46,7 @@ export const positionUpdatedSocket = async (payload : PositionEventPayload , use
     pipeline.geoadd('active:users' , payload.x , payload.y , userId) ;
     pipeline.lpush(`raceinterval:${userId}` , stringPayload) ; // used for anomaly cheacking later
     pipeline.ltrim(`raceinterval:${userId}` , 0 , 4) ; // trims and keeps only the last 5 postions with there timestamps
+    pipeline.expire(`raceinterval:${userId}` , RACE_INTERVAL_EXPIRY_TIME) ;
     pipeline.hset(`user:${userId}` , {
         timestamp : payload.timestamp ,
         latitude : payload.y ,

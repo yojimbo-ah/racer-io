@@ -1,9 +1,6 @@
 import express from "express" ;
 import 'express-async-errors';
 import { errorHandler , NotFoundError , requireAuth , currentUser , underSupervision} from "@racer-io/common" ;
-import { getUsersAroundMe } from "./routes/getUsersAroundMe";
-import { readyzRouter } from "./routes/readyz";
-import { healthzRouter } from "./routes/healthz";
 
 
 // races is not hoked to a mongodb databse ,
@@ -18,13 +15,12 @@ app.use(express.json()) ;
 app.use(currentUser) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;
-app.use(getUsersAroundMe) ;
-app.use(readyzRouter) ;
-app.use(healthzRouter) ;
+
 
 
 app.all('*' , async () => {
     throw new NotFoundError() ;
-})
+}) ;
+
 app.use(errorHandler) ; 
 export default app ;

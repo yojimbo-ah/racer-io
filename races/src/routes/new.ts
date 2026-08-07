@@ -14,9 +14,9 @@ import { UserData, UserDataString } from "../events/listeners/positionUpdatedLis
 import { RaceAwaitingPublisher } from "../events/publishers/raceAwaitingPublisher";
 import { natsWrapper } from "../nats-wrapper";
 import Race from "../models/race-model";
+import { RACE_AWAIT_EXPIRY_TIME } from "../../consts/expiry-times";
 
 const MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME = 20 // in meters 
-const EXPIRY_TIME = 60 ; // the time period where the user being invited can accept the race or it get cancelled automaticlly
 
 const router = express.Router() ;
 
@@ -85,7 +85,7 @@ router.post('/api/races/new' ,
         await redis.set(`race:await:${race._id.toString()}` , JSON.stringify({
             user1 : req.currentUser!.id ,
             user2 : req.body.friendId
-        }) , 'EX' , EXPIRY_TIME) ;
+        }) , 'EX' , RACE_AWAIT_EXPIRY_TIME) ;
 
         new RaceAwaitingPublisher(natsWrapper.client).publish({
             userData : {

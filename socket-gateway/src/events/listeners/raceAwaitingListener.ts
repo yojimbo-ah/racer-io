@@ -1,4 +1,4 @@
-import { Listener , Subjects , RaceAwaitingEvent, Position, RaceStatus } from "@racer-io/common";
+import { Listener , Subjects , RaceAwaitingEvent } from "@racer-io/common";
 import { Message } from "node-nats-streaming";
 import { queueGroupName } from "../queueGroupName";
 import { getIO } from "../../socket.io";

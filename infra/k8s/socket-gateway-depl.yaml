@@ -1,0 +1,51 @@
+#section that create the deployment and the pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: socket-gateway-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: socket-gateway
+  template: 
+    metadata:
+      labels:
+        app: socket-gateway
+    spec:
+      containers:
+        - name: socket-gateway
+          image: ahmed0ahmed/racer-socket-gateway
+          imagePullPolicy : Never
+          env: 
+            - name: NATS_CLUSTER_ID
+              value: 'racer.io'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef: 
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: 'nats://nats-srv:4222'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+            - name: REDIS_HOST
+              value: socket-gateway-redis-srv
+---
+#kubernets service cluesterip so we can acess the pod
+#default service is clusterip service that why we didint have to
+#specifie it
+apiVersion: v1
+kind: Service
+metadata: 
+  name: socket-gateway-srv
+spec: 
+  selector:
+    app: socket-gateway
+  ports:
+    - name: socket-gateway
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
