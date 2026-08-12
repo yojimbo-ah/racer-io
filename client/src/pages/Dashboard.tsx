@@ -66,6 +66,7 @@ export const Dashboard = () => {
 
   const socketRef = useRef<ReturnType<typeof createPositionSocket> | null>(null)
   const prevCoordsRef = useRef<{ lat: number; lng: number } | null>(null)
+  const lastPositionEmitAtRef = useRef<number>(0)
 
   const loadNearbyUsers = async () => {
     try {
@@ -207,28 +208,33 @@ export const Dashboard = () => {
       (pos) => {
         const { latitude, longitude, speed } = pos.coords
         const timestamp = new Date(pos.timestamp).toISOString()
+        const now = Date.now()
+        const shouldEmit = now - lastPositionEmitAtRef.current >= 10_000
 
         const heading = prevCoordsRef.current
           ? headingFromCoords(prevCoordsRef.current.lat, prevCoordsRef.current.lng, latitude, longitude)
           : 0
 
         prevCoordsRef.current = { lat: latitude, lng: longitude }
-        setCoords({ lat: latitude, lng: longitude, speed: speed ?? 0 })
-        setGpsError(null)
+        if (shouldEmit) {
+          lastPositionEmitAtRef.current = now
+          setCoords({ lat: latitude, lng: longitude, speed: speed ?? 0 })
+          setGpsError(null)
 
-        const payload = {
-          x: longitude,
-          y: latitude,
-          vx: 0,
-          vy: 0,
-          speed: speed ?? 0,
-          heading,
-          timestamp,
-          source: 'client' as const,
+          const payload = {
+            x: longitude,
+            y: latitude,
+            vx: 0,
+            vy: 0,
+            speed: speed ?? 0,
+            heading,
+            timestamp,
+            source: 'client' as const,
+          }
+
+          socketRef.current?.emit('position:update', payload)
+          setLastSentAt(timestamp)
         }
-
-        socketRef.current?.emit('position:update', payload)
-        setLastSentAt(timestamp)
       },
       (err) => {
         setGpsError(`GPS error: ${err.message}`)

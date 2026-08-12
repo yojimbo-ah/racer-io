@@ -7,6 +7,8 @@ import { RaceStartedListener } from "./events/listeners/raceStartedListener";
 import { RaceFinishedListener } from "./events/listeners/raceFinishedListener";
 import { RaceCancelledListener } from "./events/listeners/raceCancelledListener";
 import { PositionUpdatedSocketListener } from "./events/listeners/positionUpdatedSocketListener";
+import { UserConnectedListener } from "./events/listeners/userConnectedListener";
+import { UserDisConnectedListener } from "./events/listeners/userDisConnectedListener";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -56,6 +58,9 @@ const connect = async () => {
         new RaceStartedListener(natsWrapper.client).listen() ;
         new RaceCancelledListener(natsWrapper.client).listen() ;
         new PositionUpdatedSocketListener(natsWrapper.client).listen() ;
+        new UserConnectedListener(natsWrapper.client).listen() ;
+        new UserDisConnectedListener(natsWrapper.client).listen() ;
+
 
         const server = http.createServer(app) ;
         const port = Number(process.env.PORT) || 3000;

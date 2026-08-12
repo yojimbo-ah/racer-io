@@ -57,7 +57,7 @@ build:
           - src: 'src/**/*.py'
             dest: .
     - image: ahmed0ahmed/racer-socket-gateway
-      context: predictions
+      context: socket-gateway
       docker:
         dockerfile: Dockerfile
       sync:

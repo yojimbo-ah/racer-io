@@ -4,9 +4,9 @@ import { PositionEventPayload, UserPayload } from '@racer-io/common';
 import process = require('node:process');
 import jwt from 'jsonwebtoken';
 import { positionUpdatedSocket } from './func/socket/positionUpdated';
-
-
-
+import UserConnectedPublisher from './events/publishers/UserConnectedPublisher';
+import UserDisConnectedPublisher from './events/publishers/UserDisConnectedPublisher';
+import { natsWrapper } from './nats-wrapper';
 
 
 // maybe i will add a loop of here that runs every 20 seconds that checks for users in
@@ -51,6 +51,12 @@ export  const initSocket = (server : HttpServer) => {
   })
   io.on('connection', async (socket) => {
     console.log(`[socket] Client connected: ${socket.id}`);
+    // tell other services the user has connected to the app
+    // use userId the one coded in jwt not the socket id
+    new UserConnectedPublisher(natsWrapper.client).publish({
+      userId : socket.userId ,
+      timestamp : new Date().toISOString()
+    })
 
     // joining the users private room using the users is 
     socket.join(`user:${socket.userId}`) ;
@@ -61,6 +67,12 @@ export  const initSocket = (server : HttpServer) => {
     socket.on('position:update' , async (payload : PositionEventPayload) => positionUpdatedSocket(payload , socket.userId)) ;
 
     socket.on('disconnect', async () => {
+      
+      // tell the other services tha tthe user has disconnected
+      new UserDisConnectedPublisher(natsWrapper.client).publish({
+        userId : socket.userId ,
+        timestamp : new Date().toISOString()
+      })
       console.log(`[socket] Client disconnected: ${socket.id}`) ;
     }) ;
   });

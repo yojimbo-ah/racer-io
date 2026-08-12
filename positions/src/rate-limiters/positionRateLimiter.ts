@@ -3,11 +3,11 @@ import redis from "../redis";
 
 
 
-// set the max update of the position to be twice per second 
+// keep position updates to roughly once every 10 seconds
 
 export const positionRateLimiter = new RateLimiterRedis({
     storeClient : redis ,
     keyPrefix : 'position:update' ,
-    points : 2 ,
-    duration : 1
+    points : 1 ,
+    duration : 10
 })

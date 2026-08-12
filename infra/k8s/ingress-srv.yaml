@@ -26,6 +26,35 @@ spec:
                 port:
                   number: 3000
 ---
+# ---- Socket.io (no aggressive rate limiting — persistent/streaming traffic) ----
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: socket-gateway-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "socket-gateway-srv"
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: ticket-com-tls
+      hosts:
+        - ticket.com
+  rules:
+    - host: ticket.com
+      http:
+        paths:
+          - path: /socket.io/?(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: socket-gateway-srv
+                port:
+                  number: 3000
+---
 # ---- Auth (strict — brute force / credential stuffing risk) ----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -134,31 +163,3 @@ spec:
                 name: client-srv
                 port:
                   number: 80
-# ---- Socket.io (no aggressive rate limiting — persistent/streaming traffic) ----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: socket-gateway-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/websocket-services: "socket-gateway-srv"
-spec:
-  ingressClassName: nginx
-  tls:
-    - secretName: ticket-com-tls
-      hosts:
-        - ticket.com
-  rules:
-    - host: ticket.com
-      http:
-        paths:
-          - path: /socket.io/?(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: socket-gateway-srv
-                port:
-                  number: 3000

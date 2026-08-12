@@ -64,7 +64,7 @@ const connect = async () => {
         const port = Number(process.env.PORT) || 3000;
 
         server.listen(port , () => {
-            console.log(`Positions service listening on ${port}`) ;
+            console.log(`socket gateway service listening on ${port}`) ;
         }) ;
         
     } catch (error) {
