@@ -31,6 +31,11 @@ spec:
                 secretKeyRef:
                   name: jwt-secret
                   key: JWT_KEY
+            - name: ACCESS_JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: access-jwt-key
+                  key: ACCESS_JWT_KEY
             - name: REDIS_HOST
               value: socket-gateway-redis-srv
 ---

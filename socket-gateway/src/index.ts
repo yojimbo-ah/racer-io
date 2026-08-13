@@ -17,7 +17,9 @@ const connect = async () => {
     if (!process.env.JWT_KEY) {
         throw new Error('JWT_KEY  not diffined') ;
     }
-
+    if (!process.env.ACCESS_JWT_KEY) {
+        throw new Error('ACCESS JWT KEY not difined') ;
+    }
     if (!process.env.NATS_URL) {
         throw new Error('NATS connection url not dffined') ;
     }

@@ -1,5 +1,5 @@
 import express , {Request , Response} from "express" ;
-import { requireAccessAuth , currentAccessToken , UserPayload } from "@racer-io/common";
+import { requireAccessAuth , currentRefreshToken , UserPayload } from "@racer-io/common";
 import User from "../models/user-model";
 import jwt from 'jsonwebtoken' ;
 import { Expiration } from "../consts/jwt-access-time";
@@ -7,11 +7,11 @@ const router = express.Router() ;
 
 
 router.get('/api/refresh' , 
-    currentAccessToken ,
+    currentRefreshToken ,
     requireAccessAuth ,
     async (req : Request, res : Response) => {
-        const accessUser = req.accessUser ;
-        const user = await User.findById(accessUser!.id) ;
+        const refreshUser = req.refreshUser ;
+        const user = await User.findById(refreshUser!.id) ;
         if (!user) {
             throw new Error('Coulndt find the right user data') ;
         }
@@ -23,8 +23,8 @@ router.get('/api/refresh' ,
             reasonSupervision : user.reason_supervision 
         }
 
-        // create the refresh token using the JWT_KEY secret
-        const jwtToken = jwt.sign(userPayload , process.env.JWT_KEY! , {expiresIn : Expiration.refresh}) ;
+        // create the access token using the JWT_KEY secret
+        const jwtToken = jwt.sign(userPayload , process.env.ACCESS_JWT_KEY! , {expiresIn : Expiration.access}) ;
         res.status(200).json({token : jwtToken}) ;
 
 }) ;

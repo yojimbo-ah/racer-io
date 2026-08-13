@@ -15,7 +15,7 @@
     ]
   },
   "dependencies": {
-    "@racer-io/common": "^1.0.22",
+    "@racer-io/common": "^1.0.29",
     "bcrypt": "^6.0.0",
     "cookie-session": "^2.1.1",
     "express": "^4.22.1",

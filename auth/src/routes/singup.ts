@@ -1,6 +1,6 @@
 import express , {Request , Response} from "express" ;
 import { body } from "express-validator";
-import { BadRequestError , validateRequest , UserPayload , AccessPayload } from "@racer-io/common"
+import { BadRequestError , validateRequest , UserPayload , RefreshPayload } from "@racer-io/common"
 import { UserCreatedPublisher } from "../events/publishers/userCreatedPublisher";
 import User  from "../models/user-model";
 import jwt from "jsonwebtoken";
@@ -52,7 +52,7 @@ router.post('/api/users/signup' ,
             email , userId : user._id.toString() , userName
         }) ;
         
-        const accessPayload : AccessPayload = {
+        const refreshPayload : RefreshPayload = {
             email : user.email ,
             id : user._id.toString()
         }
@@ -62,14 +62,14 @@ router.post('/api/users/signup' ,
             underSupervision : user.under_supervision ,
             reasonSupervision : user.reason_supervision
         }
-        const accessToken = jwt.sign(accessPayload, process.env.ACCESS_JWT_KEY! , {expiresIn : Expiration.access})
-        const refreshToken = jwt.sign(userPayload, process.env.JWT_KEY! , {expiresIn : Expiration.refresh}) ;
+        const refreshToken = jwt.sign(refreshPayload , process.env.JWT_KEY! , {expiresIn : Expiration.refresh})
+        const accessToken = jwt.sign(userPayload, process.env.ACCESS_JWT_KEY! , {expiresIn : Expiration.access}) ;
         
         req.session = {
             jwt : refreshToken
         }
 
-        res.status(201).json({user : user , token : refreshToken , accessToken}) ;
+        res.status(201).json({user : user , token : accessToken , accessToken : refreshToken}) ;
 })
 
 export {router as signUpRouter} ;

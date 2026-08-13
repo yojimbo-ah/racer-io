@@ -37,7 +37,7 @@ export  const initSocket = (server : HttpServer) => {
     try {
       // the user must be logged in into the account 
       // has the refresh token (decrypt uisng JWT_KEY)
-      const payload = jwt.verify(token , process.env.JWT_KEY!) as UserPayload ;
+      const payload = jwt.verify(token , process.env.ACCESS_JWT_KEY!) as UserPayload ;
       // the user must not be under supervision 
       if (payload.underSupervision) {
         throw new Error('This user is under supervision') ;
