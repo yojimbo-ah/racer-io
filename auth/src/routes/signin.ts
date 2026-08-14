@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken" ;
 import { Password } from "../services/password";
 import User from "../models/user-model";
 import { Expiration } from "../consts/jwt-access-time";
+import Session from "../models/session";
+
 const router = express.Router() ;
 
 router.post('/api/users/signin' , 
@@ -28,19 +30,34 @@ router.post('/api/users/signin' ,
         if (!passwordCompare) {
             throw new BadRequestError('Invalid user password') ;
         }
+        const session = Session.build({
+            userId : String(user._id) ,
+            hashSession : '' ,
+            expiresAt : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ,
+            ip : req.ip ,
+            userAgent : req.headers['user-agent']
+        })
+
         const refreshPayload : RefreshPayload = {
             email : user.email ,
-            id : user.id
+            id : user.id ,
+            sessionId : String(session._id)
         }
         const userPayload : UserPayload = {
             email : user.email ,
             id : user.id ,
             underSupervision : user.under_supervision ,
             reasonSupervision : user.reason_supervision
-        }
+        } ;
+
         const refreshToken = jwt.sign(refreshPayload , process.env.JWT_KEY! , {expiresIn : Expiration.refresh})
         const accessToken = jwt.sign(userPayload, process.env.ACCESS_JWT_KEY! , {expiresIn : Expiration.access}) ;
         
+        // save the session in the SessionModel 
+        session.hashSession = refreshToken ;
+
+        await session.save() ;
+
         req.session = {
             jwt : refreshToken
         }

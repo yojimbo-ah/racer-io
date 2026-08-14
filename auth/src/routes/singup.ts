@@ -6,6 +6,7 @@ import User  from "../models/user-model";
 import jwt from "jsonwebtoken";
 import { natsWrapper } from "../nats-wrapper";
 import { Expiration } from "../consts/jwt-access-time";
+import Session from "../models/session";
 
 // will use the refrech token method later 
 // that to reduce query time specilly in race service
@@ -51,10 +52,20 @@ router.post('/api/users/signup' ,
         await new UserCreatedPublisher(natsWrapper.client).publish({
             email , userId : user._id.toString() , userName
         }) ;
-        
+        // start with the sesion empty 
+        // to get the session id
+        const session = Session.build({
+            userId : String(user._id) ,
+            hashSession : '' ,
+            expiresAt : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ,
+            ip : req.ip ,
+            userAgent : req.headers['user-agent']
+        })    
+    
         const refreshPayload : RefreshPayload = {
             email : user.email ,
-            id : user._id.toString()
+            id : user._id.toString() ,
+            sessionId : String(session._id)
         }
         const userPayload : UserPayload = {
             email : user.email ,
@@ -64,7 +75,10 @@ router.post('/api/users/signup' ,
         }
         const refreshToken = jwt.sign(refreshPayload , process.env.JWT_KEY! , {expiresIn : Expiration.refresh})
         const accessToken = jwt.sign(userPayload, process.env.ACCESS_JWT_KEY! , {expiresIn : Expiration.access}) ;
-        
+        // then add the hash token here
+        session.hashSession = refreshToken ;
+
+        await session.save() ;
         req.session = {
             jwt : refreshToken
         }
