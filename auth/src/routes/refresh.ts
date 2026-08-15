@@ -2,7 +2,7 @@ import express , {Request , Response} from "express" ;
 import { requireAccessAuth , currentRefreshToken , UserPayload } from "@racer-io/common";
 import User from "../models/user-model";
 import jwt from 'jsonwebtoken' ;
-import { Expiration } from "../consts/jwt-access-time";
+import { Expiration , ExpirationNum } from "../consts/jwt-access-time";
 import Session from "../models/session";
 import { Password } from "../services/password";
 
@@ -46,7 +46,15 @@ router.get('/api/refresh' ,
             reasonSupervision : user.reason_supervision 
         }
         // create the access token using the JWT_KEY secret
+
         const jwtToken = jwt.sign(userPayload , process.env.ACCESS_JWT_KEY! , {expiresIn : Expiration.access}) ;
+        res.cookie('accessToken' ,jwtToken , {
+            httpOnly: true,
+            secure: true,        // HTTPS only
+            sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work
+            path: '/api/auth/refresh',  // scoped narrowly — this cookie is only ever sent to this one endpoint
+            maxAge: ExpirationNum.refresh ,
+        })
         res.status(200).json({token : jwtToken}) ;
 
 }) ;

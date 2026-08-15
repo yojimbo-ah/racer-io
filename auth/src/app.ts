@@ -1,5 +1,6 @@
 import express from "express" ;
 import 'express-async-errors';
+import cookieParser from "cookie-parser";
 import { currentUserRouter } from "./routes/current-user";
 import { signInRouter } from "./routes/signin";
 import { signUpRouter } from "./routes/singup";
@@ -13,7 +14,7 @@ const app = express() ;
 
 app.set('trust proxy' , true) ;
 app.use(express.json()) ;
-
+app.use(cookieParser()) ;
 app.use(currentUserRouter) ;
 app.use(signInRouter) ;
 app.use(signUpRouter) ;

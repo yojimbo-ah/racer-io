@@ -1,4 +1,5 @@
 import express from "express" ;
+import cookieParser from 'cookie-parser' ;
 import 'express-async-errors';
 import { errorHandler , NotFoundError , requireAuth , currentUser , underSupervision} from "@racer-io/common" ;
 
@@ -12,6 +13,7 @@ const app = express() ;
 
 app.set('trust proxy' , true) ;
 app.use(express.json()) ;
+app.use(cookieParser()) ;
 app.use(currentUser) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;

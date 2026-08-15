@@ -50,7 +50,7 @@ const headingFromCoords = (lat1: number, lng1: number, lat2: number, lng2: numbe
 }
 
 export const Dashboard = () => {
-  const { user, logout, getRefreshToken } = useAuth()
+  const { user, logout } = useAuth()
 
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
   const [lastSentAt, setLastSentAt] = useState<string>('Waiting for first emit')
@@ -72,9 +72,7 @@ export const Dashboard = () => {
     try {
       const response = await fetch(`${getApiUrl()}/api/positions/aroundme`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${getRefreshToken()}`,
-        },
+        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -94,10 +92,8 @@ export const Dashboard = () => {
   const sendRaceDecision = async (accept: boolean, raceId: string) => {
     const response = await fetch(`${getApiUrl()}/api/races/accept-race`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-          Authorization: `Bearer ${getRefreshToken()}`,
-      },
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ raceId, accept }),
     })
 
@@ -126,10 +122,8 @@ export const Dashboard = () => {
     try {
       const response = await fetch(`${getApiUrl()}/api/races/new`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getRefreshToken()}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           friendId: selectedOpponent,
           startPos: {
@@ -154,7 +148,7 @@ export const Dashboard = () => {
   }
 
   useEffect(() => {
-    const socket = createPositionSocket(serverUrl, getRefreshToken())
+    const socket = createPositionSocket(serverUrl)
     socketRef.current = socket
 
     socket.on('connect', () => {
@@ -196,7 +190,7 @@ export const Dashboard = () => {
       socket.close()
       socketRef.current = null
     }
-  }, [getRefreshToken])
+  }, [])
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -257,7 +251,7 @@ export const Dashboard = () => {
     }, 20000)
 
     return () => window.clearInterval(intervalId)
-  }, [getRefreshToken])
+  }, [])
 
   const connectionTone = {
     connecting: 'yellow',

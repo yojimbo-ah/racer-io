@@ -5,7 +5,7 @@ import { UserCreatedPublisher } from "../events/publishers/userCreatedPublisher"
 import User  from "../models/user-model";
 import jwt from "jsonwebtoken";
 import { natsWrapper } from "../nats-wrapper";
-import { Expiration } from "../consts/jwt-access-time";
+import { Expiration , ExpirationNum} from "../consts/jwt-access-time";
 import Session from "../models/session";
 
 // will use the refrech token method later 
@@ -79,6 +79,19 @@ router.post('/api/users/signup' ,
         session.hashSession = refreshToken ;
 
         await session.save() ;
+        res.cookie('accessToken' , accessToken , {
+            httpOnly: true,
+            secure: true,        // HTTPS only
+            sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work  
+            maxAge: ExpirationNum.access,
+        }) ;
+        res.cookie('refreshToken' , refreshToken , {
+            httpOnly: true,
+            secure: true,        // HTTPS only
+            sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work
+            path: '/api/auth/refresh',
+            maxAge: ExpirationNum.refresh, 
+        })
         req.session = {
             jwt : refreshToken
         }

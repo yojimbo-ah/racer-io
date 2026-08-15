@@ -4,7 +4,7 @@ import { validateRequest , BadRequestError , UserPayload , RefreshPayload} from 
 import jwt from "jsonwebtoken" ;
 import { Password } from "../services/password";
 import User from "../models/user-model";
-import { Expiration } from "../consts/jwt-access-time";
+import { Expiration , ExpirationNum } from "../consts/jwt-access-time";
 import Session from "../models/session";
 
 const router = express.Router() ;
@@ -33,7 +33,7 @@ router.post('/api/users/signin' ,
         const session = Session.build({
             userId : String(user._id) ,
             hashSession : '' ,
-            expiresAt : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ,
+            expiresAt : new Date(Date.now() + ExpirationNum.refresh) ,
             ip : req.ip ,
             userAgent : req.headers['user-agent']
         })
@@ -61,7 +61,19 @@ router.post('/api/users/signin' ,
         req.session = {
             jwt : refreshToken
         }
-
+        res.cookie('accessToken' , accessToken , {
+            httpOnly: true,
+            secure: true,        // HTTPS only
+            sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work  
+            maxAge: ExpirationNum.access,
+        }) ;
+        res.cookie('refreshToken' , refreshToken , {
+            httpOnly: true,
+            secure: true,        // HTTPS only
+            sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work
+            path: '/api/auth/refresh',
+            maxAge: ExpirationNum.refresh, 
+        })
         res.status(201).json({user : user , token : accessToken , accessToken : refreshToken}) ;
 })
 

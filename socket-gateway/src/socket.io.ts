@@ -7,6 +7,8 @@ import { positionUpdatedSocket } from './func/socket/positionUpdated';
 import UserConnectedPublisher from './events/publishers/UserConnectedPublisher';
 import UserDisConnectedPublisher from './events/publishers/UserDisConnectedPublisher';
 import { natsWrapper } from './nats-wrapper';
+import cookie from 'cookie' ;
+
 
 
 // maybe i will add a loop of here that runs every 20 seconds that checks for users in
@@ -24,7 +26,9 @@ export  const initSocket = (server : HttpServer) => {
   io = new Server(server, {
     // Socket.io listens at default /socket.io/ path
     cors: {
-      origin:  '*'  ,
+      // reflect origin and allow credentials so cookies can be sent on handshake
+      origin: true,
+      credentials: true,
       methods: ['GET', 'POST' , 'PUT' , 'PATCH' , 'DELETE'] 
     },
     transports: ['websocket', 'polling']
@@ -33,12 +37,22 @@ export  const initSocket = (server : HttpServer) => {
   // middlewares that checks for user authentification 
   io.use((socket , next) => {
 
-    const token = socket.handshake.auth.token ;
+    // if token wasn't passed in auth payload, try to parse from cookies header
+  
+    const cookieHeader = socket.handshake.headers?.cookie;
+    if (!cookieHeader) {
+      throw new Error('Couldnt create the socket channel , no cookie provied') ;
+    }
+    
+    const parsed = cookie.parse(cookieHeader);
+    const token = parsed['accessToken'];
+
+    
+    console.log(`token : ${token}`) ;
     try {
-      // the user must be logged in into the account 
-      // has the refresh token (decrypt uisng JWT_KEY)
+      if (!token) throw new Error('No token provided') ;
       const payload = jwt.verify(token , process.env.ACCESS_JWT_KEY!) as UserPayload ;
-      // the user must not be under supervision 
+      // check if the user is under supervision
       if (payload.underSupervision) {
         throw new Error('This user is under supervision') ;
       }
@@ -47,7 +61,6 @@ export  const initSocket = (server : HttpServer) => {
     } catch (err) {
       next(new Error('Couldnt valiate user'))
     }
-
   })
   io.on('connection', async (socket) => {
     console.log(`[socket] Client connected: ${socket.id}`);
