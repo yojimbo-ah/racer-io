@@ -32,6 +32,15 @@ build:
         manual:
           - src: 'src/**/*.ts'
             dest: .
+    # the saga orchestrator for the races service
+    - image: ahmed0ahmed/racer-races-saga-orchestrator
+      context: races-saga-orchestrator
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: 'src/**/*.ts'
+            dest: .
     - image: ahmed0ahmed/racer-archive
       context: archive
       docker:

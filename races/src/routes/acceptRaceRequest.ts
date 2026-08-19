@@ -14,7 +14,6 @@ import { RaceCancelledPublisher } from "../events/publishers/RaceCancelledPublis
 import { natsWrapper } from "../nats-wrapper";
 import { RACE_STARTED_EXPIRY_TIME, RACE_USER_STATE_EXPIRY_TIME } from "../../consts/expiry-times";
 
-
 const router = express.Router() ;
 
 router.post('/api/races/accept-race' ,

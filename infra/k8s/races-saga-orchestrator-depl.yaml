@@ -1,0 +1,56 @@
+#section that create the deployment and the pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: races-saga-orchestrator-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: races-saga-orchestrator
+  template: 
+    metadata:
+      labels:
+        app: races-saga-orchestrator
+    spec:
+      containers:
+        - name: races-saga-orchestrator
+          image: ahmed0ahmed/racer-races-saga-orchestrator
+          imagePullPolicy : Never
+          env: 
+            - name: NATS_CLUSTER_ID
+              value: 'racer.io'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef: 
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: 'nats://nats-srv:4222'
+            - name: MONGO_URI
+              value: 'mongodb://auth-mongo-srv:27017/auth'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+            - name: ACCESS_JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: access-jwt-key
+                  key: ACCESS_JWT_KEY
+---
+#kubernets service cluesterip so we can acess the pod
+#default service is clusterip service that why we didint have to
+#specifie it
+apiVersion: v1
+kind: Service
+metadata: 
+  name: races-saga-orchestrator-srv
+spec: 
+  selector:
+    app: races-saga-orchestrator
+  ports:
+    - name: races-saga-orchestrator
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

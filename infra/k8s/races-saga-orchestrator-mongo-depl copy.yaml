@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: races-saga-orchestrator-mongo-depl
+  labels:
+    app: races-saga-orchestrator-mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: races-saga-orchestrator-mongo
+  template: 
+    metadata:
+      labels:
+        app: races-saga-orchestrator-mongo
+    spec:
+      containers:
+        - name: races-saga-orchestrator-mongo
+          image: mongo:latest
+          imagePullPolicy : IfNotPresent
+          args: ["--wiredTigerCacheSizeGB", "0.25"]  # ✅ limits mongo cache to 100MB
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          ports:
+            - containerPort: 27017
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata: 
+  name: races-saga-orchestrator-mongo-srv
+spec: 
+  selector:
+    app: races-saga-orchestrator-mongo
+  ports:
+    - name: db
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
