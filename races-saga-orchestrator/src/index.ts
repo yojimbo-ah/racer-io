@@ -3,7 +3,7 @@ import { natsWrapper } from "./nats-wrapper";
 import mongoose from "mongoose";
 import RaceCreatedResultArchiveListener from "./events/race-created/listeners/raceCreatedResultArchive";
 import RaceCreatedResultPositionsListener from "./events/race-created/listeners/raceCreatedResultPositions";
-
+import RaceCreatedSagaListener from "./events/race-created/listeners/raceCreatedSagaListener";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -38,8 +38,11 @@ const connect = async () => {
         process.on('SIGINT' , () => natsWrapper.client.close()) ;
         process.on('SIGTERM' , () => natsWrapper.client.close()) ;
 
+
+        // all the listeners that the service currently uses 
         new RaceCreatedResultArchiveListener(natsWrapper.client).listen() ;
         new RaceCreatedResultPositionsListener(natsWrapper.client).listen() ;
+        new RaceCreatedSagaListener(natsWrapper.client).listen() ;
 
         mongoose.connect(process.env.MONGO_URI) ;
         app.listen(3000 , () => {

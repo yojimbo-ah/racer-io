@@ -11,18 +11,20 @@ export enum SagaStatus {
     COMPENSATION_FAILED = 'COMPENSATION_FAILED',
 }
 
+
 export enum SagaStep {
     RACE_CREATED = 'RACE_CREATED',
     POSITIONS_INITIALIZED = 'POSITIONS_INITIALIZED',
-    PREDICTIONS_STARTED = 'PREDICTIONS_STARTED',
+    RACE_ARCHIVED = 'RACE_ARCHIVED' ,
 }
+export const Steps = Object.values(SagaStep);
 
 interface RaceSagaAttrs {
-    raceId: mongoose.Types.ObjectId;
+    raceId: string;
 }
 
-interface RaceSagaDocument extends Document {
-    raceId: mongoose.Types.ObjectId;
+export interface RaceSagaDocument extends Document {
+    raceId: string;
     status: SagaStatus;
     completedSteps: SagaStep[];
     error?: string;
@@ -36,7 +38,7 @@ interface RaceSagaModel extends Model<RaceSagaDocument> {
 
 const raceSagaSchema = new mongoose.Schema({
     raceId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: 'Race',
         required: true,
         index: true, // you'll query "find the saga for this race" often
