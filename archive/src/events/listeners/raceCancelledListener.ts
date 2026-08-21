@@ -9,15 +9,12 @@ export class RaceCancelledListener extends Listener <RaceCancelledEvent>{
     subject = Subjects.RaceCancelled as const ;
     async onMessage(data: RaceCancelledEvent['data'] , msg: Message): Promise<void> {
         // logique to save the user positon 
-        const race = Race.build({
-            users : [data.userData.user1 , data.userData.user2] ,
-            endingPos : data.race.endPosition ,
-            startPos : data.race.startPos ,
-            _id : data.race.raceId ,
-            raceStatus : RaceStatus.RaceCancelled
-        })
+        const race = await Race.findById(data.race.raceId) ;
         try {
-            
+            if (!race) {
+                throw new Error('coulndt find the race')
+            }
+            race.raceStatus = RaceStatus.RaceCancelled ;
             await race.save() ;
         } catch (err) {
             console.log(err) ;

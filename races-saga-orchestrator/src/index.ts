@@ -1,7 +1,6 @@
 import {app} from "./app";
 import { natsWrapper } from "./nats-wrapper";
 import mongoose from "mongoose";
-import RaceCreatedResultArchiveListener from "./events/race-created/listeners/raceCreatedResultArchive";
 import RaceCreatedResultPositionsListener from "./events/race-created/listeners/raceCreatedResultPositions";
 import RaceCreatedSagaListener from "./events/race-created/listeners/raceCreatedSagaListener";
 
@@ -40,7 +39,6 @@ const connect = async () => {
 
 
         // all the listeners that the service currently uses 
-        new RaceCreatedResultArchiveListener(natsWrapper.client).listen() ;
         new RaceCreatedResultPositionsListener(natsWrapper.client).listen() ;
         new RaceCreatedSagaListener(natsWrapper.client).listen() ;
 

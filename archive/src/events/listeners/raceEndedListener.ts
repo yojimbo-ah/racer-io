@@ -9,14 +9,13 @@ export class RaceFinishedListener extends Listener <RaceFinishedEvent>{
     subject = Subjects.RaceFinished as const ;
     async onMessage(data: RaceFinishedEvent['data'] , msg: Message): Promise<void> {
         // logique to save the user positon
-        const race = Race.build({
-            users : [data.userData.user1 , data.userData.user2] ,
-            endingPos : data.race.endPosition ,
-            startPos : data.race.startPos ,
-            _id : data.race.raceId ,
-            raceStatus : RaceStatus.RaceEnded ,
-            winner : data.userData.winner
-        })
+        const race = await Race.findById(data.race.raceId) ;
+        if (!race) {
+            throw new Error('error happened') ;
+        }
+
+        race.winner = data.userData.winner ;
+        race.raceStatus = RaceStatus.RaceEnded ;
         try {
             await race.save() ;
         } catch (err) {

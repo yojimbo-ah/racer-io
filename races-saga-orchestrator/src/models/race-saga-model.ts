@@ -21,11 +21,13 @@ export const Steps = Object.values(SagaStep);
 
 interface RaceSagaAttrs {
     raceId: string;
+    users : string [] ;
 }
 
 export interface RaceSagaDocument extends Document {
     raceId: string;
     status: SagaStatus;
+    users : string [] ;
     completedSteps: SagaStep[];
     error?: string;
     createdAt: Date;
@@ -43,6 +45,10 @@ const raceSagaSchema = new mongoose.Schema({
         required: true,
         index: true, // you'll query "find the saga for this race" often
     },
+    users : [{
+        type : String ,
+        default : []
+    }] ,
     status: {
         type: String,
         enum: Object.values(SagaStatus),

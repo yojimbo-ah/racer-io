@@ -3,7 +3,8 @@ import process from "process";
 import { natsWrapper } from "./nats-wrapper";
 import http from "http"
 import redis from "./redis";
-import { RaceStartedListener } from "./events/listeners/raceStartedListener";
+import RaceCancelledPositionsListener from "./events/listeners/raceCancelledPositionsListener";
+import RaceCreatedSagaListener from "./events/listeners/raceCreatedSagaListener";
 import { RaceFinishedListener } from "./events/listeners/raceFinishedListener";
 import { RaceCancelledListener } from "./events/listeners/raceCancelledListener";
 import { PositionUpdatedSocketListener } from "./events/listeners/positionUpdatedSocketListener";
@@ -55,12 +56,12 @@ const connect = async () => {
         process.on('SIGTERM' , () => natsWrapper.client.close()) ;
 
         new RaceFinishedListener(natsWrapper.client).listen() ;
-        new RaceStartedListener(natsWrapper.client).listen() ;
         new RaceCancelledListener(natsWrapper.client).listen() ;
         new PositionUpdatedSocketListener(natsWrapper.client).listen() ;
         new UserConnectedListener(natsWrapper.client).listen() ;
         new UserDisConnectedListener(natsWrapper.client).listen() ;
-
+        new RaceCancelledPositionsListener(natsWrapper.client).listen() ;
+        new RaceCreatedSagaListener(natsWrapper.client).listen() ;
 
         const server = http.createServer(app) ;
         const port = Number(process.env.PORT) || 3000;
