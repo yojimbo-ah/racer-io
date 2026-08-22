@@ -6,6 +6,7 @@ import { SagaStep } from "../../../models/race-saga-model";
 import RaceCreatedResultSagaPublisher from "../publishers/raceCreatedResultSagaPublisher";
 import { componsate } from "../componsate";
 
+
 // this listener treateat the events comming from both the services archive and positions at the same time 
 // weither it success or failure status 
 
@@ -26,14 +27,17 @@ export default class RaceCreatedResultPositionsListener extends Listener <RaceCr
             }
             // depends on the service 
             if (data.service === Services.archive) {
+                raceSaga.respondedServices.push(Services.archive) ;
                 raceSaga.completedSteps.push(SagaStep.RACE_ARCHIVED) ;
             }
             if (data.service === Services.positions) {
+                raceSaga.respondedServices.push(Services.positions) ;
                 raceSaga.completedSteps.push(SagaStep.POSITIONS_INITIALIZED) ;
             }
 
             // in case all the steps had been done
             await raceSaga.save() ;
+            // add more cheks here bceause currenlty we just check the length
             if (raceSaga.completedSteps.length === Steps.length) {
                 // in case of all steps had been done
                 // notify the race service
@@ -42,6 +46,10 @@ export default class RaceCreatedResultPositionsListener extends Listener <RaceCr
                     status : true
                 })
 
+            } else if (raceSaga.respondedServices.length === Steps.length) {
+                // simlair to the userCreated service read the documentation 
+                // there
+                await componsate(raceSaga) ;
             }
             msg.ack() ;
 
@@ -53,7 +61,11 @@ export default class RaceCreatedResultPositionsListener extends Listener <RaceCr
                 msg.ack(); 
                 return ;
             }
-            if (raceSaga.completedSteps.length === 2) {
+            // push the service then check the length if it 3 then all the services had
+            // responded 
+            raceSaga.respondedServices.push(data.service) ;
+            await raceSaga.save() ;
+            if (raceSaga.respondedServices.length === Steps.length) {
                 // means the other service has replied 
                 await componsate(raceSaga) ;
 

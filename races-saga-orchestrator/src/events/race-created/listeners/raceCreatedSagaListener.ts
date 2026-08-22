@@ -1,4 +1,4 @@
-import { Listener , RaceStartedEvent , Subjects } from "@racer-io/common";
+import { Listener , RaceStartedEvent , Services, Subjects } from "@racer-io/common";
 import queueGroupName from "../../queueGroupName";
 import { Message } from "node-nats-streaming";
 import { RaceSaga } from "../../../models/race-saga-model";
@@ -16,7 +16,10 @@ export default class RaceCreatedSagaListener  extends Listener<RaceStartedEvent>
             raceId : data.race.raceId ,
             users : [data.userData.user1 , data.userData.user2]
         }) ;
+        // add both events that it was treated and that it 
+        // was succeful event traitement also 
         raceSaga.completedSteps.push(SagaStep.RACE_CREATED) ;
+        raceSaga.respondedServices.push(Services.races) ;
         await raceSaga.save() ;
 
         // publish to positions and archive service

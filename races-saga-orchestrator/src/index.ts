@@ -3,6 +3,8 @@ import { natsWrapper } from "./nats-wrapper";
 import mongoose from "mongoose";
 import RaceCreatedResultPositionsListener from "./events/race-created/listeners/raceCreatedResultPositions";
 import RaceCreatedSagaListener from "./events/race-created/listeners/raceCreatedSagaListener";
+import UserCreatedResultRacesArchiveListener from "./events/user-created/listeners/userCreatedResultArchiveRacesListener";
+import UserCreatedSagaListener from "./events/user-created/listeners/userCreatedSagaListener";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -39,9 +41,14 @@ const connect = async () => {
 
 
         // all the listeners that the service currently uses 
+
+        // race started orchestrators
         new RaceCreatedResultPositionsListener(natsWrapper.client).listen() ;
         new RaceCreatedSagaListener(natsWrapper.client).listen() ;
 
+        // user created orchestrators
+        new UserCreatedSagaListener(natsWrapper.client).listen() ;
+        new UserCreatedResultRacesArchiveListener(natsWrapper.client).listen() ;
         mongoose.connect(process.env.MONGO_URI) ;
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;

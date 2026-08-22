@@ -1,5 +1,5 @@
 import mongoose, { Model, Document } from 'mongoose';
-
+import { Services } from '@racer-io/common';
 
 // will move them to the common library 
 
@@ -29,6 +29,7 @@ export interface RaceSagaDocument extends Document {
     status: SagaStatus;
     users : string [] ;
     completedSteps: SagaStep[];
+    respondedServices : Services []
     error?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -57,7 +58,15 @@ const raceSagaSchema = new mongoose.Schema({
     completedSteps: [{
         type: String,
         enum: Object.values(SagaStep),
+        default : []
     }],
+    respondedServices : [{
+        type : String ,
+        // the services allowed to repspond to the saga serice and write in
+        // this record
+        enum : [Services.archive , Services.positions , Services.races] ,
+        default : []
+    }] ,
     error: {
         type: String,
         required: false,
