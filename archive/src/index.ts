@@ -4,6 +4,8 @@ import { natsWrapper } from "./nats-wrapper";
 import { PositionUpdatedAchiveListener } from "./events/listeners/positionUpdatedArchiveListener";
 import { RaceCancelledListener } from "./events/listeners/raceCancelledListener";
 import { RaceFinishedListener } from "./events/listeners/raceEndedListener";
+import RaceCreatedSagaListener from "./events/listeners/raceCreatedSagaListener";
+import RaceCancelledArchiveListener from "./events/listeners/raceCancelledArchiveListener";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -41,7 +43,8 @@ const connect = async () => {
         new RaceCancelledListener(natsWrapper.client).listen() ;
         new RaceFinishedListener(natsWrapper.client).listen() ;
         new PositionUpdatedAchiveListener(natsWrapper.client).listen() ;
-
+        new RaceCancelledArchiveListener(natsWrapper.client).listen() ;
+        new RaceCreatedSagaListener(natsWrapper.client).listen() ;
         
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;

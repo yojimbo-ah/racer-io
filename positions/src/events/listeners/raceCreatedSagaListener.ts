@@ -9,7 +9,7 @@ import RaceCreatedResultPositionsArchivePublisher from "../publishers/raceCreate
 
 export default class RaceCreatedSagaListener extends Listener<RaceCreatedSagaEvent> {
     queueGroupName = queueGroupName ;
-    subject = SubjectRaceSage.raceCreatedSagaResult as const ;
+    subject = SubjectRaceSage.raceCreatedsaga as const ;
     async onMessage(data: RaceCreatedSagaEvent['data'] , msg: Message): Promise<void> {
         try {
             // will have to do something with the client feedback here 

@@ -16,7 +16,7 @@ import { natsWrapper } from "../nats-wrapper";
 import Race from "../models/race-model";
 import { RACE_AWAIT_EXPIRY_TIME } from "../../consts/expiry-times";
 
-const MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME = 20 // in meters 
+const MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME = 100 // in meters 
 
 const router = express.Router() ;
 

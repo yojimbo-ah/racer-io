@@ -5,11 +5,11 @@ import Race from "../../models/race-model";
 import RaceCreatedResultPositionsArchivePublisher from "../publishers/raceCreatedResultPositionsArchivePublisher";
 
 export default class RaceCreatedSagaListener extends Listener<RaceCreatedSagaEvent> {
-    subject = SubjectRaceSage.raceCreatedSagaResult as const ;
+    subject = SubjectRaceSage.raceCreatedsaga as const ;
     queueGroupName = queueGroupName ;
     async onMessage(data: RaceCreatedSagaEvent['data'] , msg: Message): Promise<void> {
         // create the strating event and use the try and catch blocks here
-        
+        console.log(data) ;
         try {
             const race = Race.build({
                 _id : data.payload.race.raceId ,
@@ -19,7 +19,8 @@ export default class RaceCreatedSagaListener extends Listener<RaceCreatedSagaEve
                 users : [data.payload.userData.user1 , data.payload.userData.user2] ,
             }) ;
 
-            await race.save() ;
+            const res = await race.save() ;
+            console.log(res) ;
             // send the event with seccess message
             new RaceCreatedResultPositionsArchivePublisher(this.client).publish({
                 raceId : data.payload.race.raceId ,
