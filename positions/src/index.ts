@@ -55,11 +55,14 @@ const connect = async () => {
         process.on('SIGINT' , () => natsWrapper.client.close()) ;
         process.on('SIGTERM' , () => natsWrapper.client.close()) ;
 
+        // work without the saga orchestration
         new RaceFinishedListener(natsWrapper.client).listen() ;
         new RaceCancelledListener(natsWrapper.client).listen() ;
         new PositionUpdatedSocketListener(natsWrapper.client).listen() ;
         new UserConnectedListener(natsWrapper.client).listen() ;
         new UserDisConnectedListener(natsWrapper.client).listen() ;
+
+        // listeners that utilize the races-saga-orchestrator
         new RaceCancelledPositionsListener(natsWrapper.client).listen() ;
         new RaceCreatedSagaListener(natsWrapper.client).listen() ;
 
