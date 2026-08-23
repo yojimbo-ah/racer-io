@@ -17,7 +17,7 @@ export default class UserCreatedListener extends Listener <UserCreatedSagaEvent>
             await user.save() ;
             // case of success
             new UserCreatedResultRacesArchivePublisher(this.client).publish({
-                sagaId : String(user._id) ,
+                sagaId : data.sagaId ,
                 service : Services.archive , 
                 status : true ,
                 userId : data.payload.userId

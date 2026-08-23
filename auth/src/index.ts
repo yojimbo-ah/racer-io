@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import app from "./app";
 import { natsWrapper } from "./nats-wrapper";
 import { CheaterDetectedListener } from "./events/listeners/cheaterDetectedListener";
+import UserCreatedSagaResultListener from "./events/listeners/userCreationResultListener";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -39,6 +40,7 @@ const connect = async () => {
         process.on('SIGTERM' , () => natsWrapper.client.close()) ;
 
         new CheaterDetectedListener(natsWrapper.client).listen() ;
+        new UserCreatedSagaResultListener(natsWrapper.client).listen() ;
 
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;
