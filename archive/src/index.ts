@@ -6,6 +6,8 @@ import { RaceCancelledListener } from "./events/listeners/raceCancelledListener"
 import { RaceFinishedListener } from "./events/listeners/raceEndedListener";
 import RaceCreatedSagaListener from "./events/listeners/raceCreatedSagaListener";
 import RaceCancelledArchiveListener from "./events/listeners/raceCancelledArchiveListener";
+import UserCreatedListener from "./events/listeners/userCreatedListener";
+import UserCreationCancelledArchiveListener from "./events/listeners/userCreationFailedListener";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -48,6 +50,11 @@ const connect = async () => {
         // listeners that utilize the races-saga-orchestrator service
         new RaceCancelledArchiveListener(natsWrapper.client).listen() ;
         new RaceCreatedSagaListener(natsWrapper.client).listen() ;
+
+        // listener works for auth service orchestration 
+
+        new UserCreatedListener(natsWrapper.client).listen() ;
+        new UserCreationCancelledArchiveListener(natsWrapper.client).listen() ;
         
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;

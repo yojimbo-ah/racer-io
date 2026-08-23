@@ -6,6 +6,7 @@ import { UserCreatedListener } from "./events/listeners/userCreatedListener";
 import { UserUpdatedListener } from "./events/listeners/userUpdatedListener";
 import { AnomalyDetectedListener } from "./events/listeners/anomalyDetectedListener";
 import RaceCreatedSagaResultListener from "./events/listeners/raceCreatedSagaResult";
+import UserCreationCancelledRacesListener from "./events/listeners/userCreationCancelledRacesListener";
 import redis from "./redis";
 
 const connect = async () => {
@@ -44,8 +45,6 @@ const connect = async () => {
         // without saga orchetrating
         new PositionUpdatedListener(natsWrapper.client)
         .listen() ;
-        new UserCreatedListener(natsWrapper.client)
-        .listen() ;
         new UserUpdatedListener(natsWrapper.client)
         .listen() ;
         new AnomalyDetectedListener(natsWrapper.client)
@@ -55,6 +54,12 @@ const connect = async () => {
         new RaceCreatedSagaResultListener(natsWrapper.client)
         .listen() ;
         
+        // saga orchestration for the auth 
+        new UserCreatedListener(natsWrapper.client)
+        .listen() ;
+        new UserCreationCancelledRacesListener(natsWrapper.client)
+        .listen() ;
+
         mongoose.connect(process.env.MONGO_URI) ;
         await redis.connect() ;
         app.listen(3000 , () => {
