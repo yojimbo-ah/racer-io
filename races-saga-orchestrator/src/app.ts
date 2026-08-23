@@ -1,9 +1,6 @@
 import express from "express" ;
 import 'express-async-errors';
-import {NotFoundError , errorHandler , currentUser , requireAuth , underSupervision} from "@racer-io/common"
-
-
-const TIME_BETWEEN_RACES_CHECKS = 20000 // 20S
+import {NotFoundError , errorHandler} from "@racer-io/common"
 
 
 const app = express() ;

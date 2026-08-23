@@ -15,13 +15,14 @@
     ]
   },
   "dependencies": {
-    "@racer-io/common": "^2.0.12",
+    "@racer-io/common": "^2.0.15",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cookie-session": "^2.1.1",
     "express": "^4.22.1",
     "express-async-errors": "^3.1.1",
     "express-validator": "^7.3.1",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.1",
     "node-nats-streaming": "^0.3.2",

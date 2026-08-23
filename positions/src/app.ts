@@ -5,7 +5,7 @@ import { errorHandler , NotFoundError , requireAuth , currentUser , underSupervi
 import { getUsersAroundMe } from "./routes/getUsersAroundMe";
 import { readyzRouter } from "./routes/readyz";
 import { healthzRouter } from "./routes/healthz";
-
+import blacklistRedis from "./blacklistRedis";
 
 // races is not hoked to a mongodb databse ,
 // it used for edge computing and filtering and init the channels for
@@ -18,6 +18,9 @@ app.set('trust proxy' , true) ;
 app.use(express.json()) ;
 app.use(cookieParser()) ;
 app.use(currentUser) ;
+// this route is to check if the user is black listed (or the account doesnt exist)
+// in case of login or singup failure
+app.use(blacklistRedis.requireNotBlacklisted) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;
 app.use(getUsersAroundMe) ;

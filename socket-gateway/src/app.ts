@@ -2,7 +2,7 @@ import express from "express" ;
 import cookieParser from 'cookie-parser' ;
 import 'express-async-errors';
 import { errorHandler , NotFoundError , requireAuth , currentUser , underSupervision} from "@racer-io/common" ;
-
+import blacklistRedis from "./blacklistRedis";
 
 // races is not hoked to a mongodb databse ,
 // it used for edge computing and filtering and init the channels for
@@ -15,6 +15,7 @@ app.set('trust proxy' , true) ;
 app.use(express.json()) ;
 app.use(cookieParser()) ;
 app.use(currentUser) ;
+app.use(blacklistRedis.requireNotBlacklisted) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;
 

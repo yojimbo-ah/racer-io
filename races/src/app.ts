@@ -8,6 +8,7 @@ import { getRacesRouter } from "./routes/getRaces";
 import { healthzRouter } from "./routes/healthz";
 import { readyzRouter } from "./routes/readyz";
 import raceEngine from "./func/helper/race-engine";
+import blacklistRedis from "./blacklistRedis";
 
 const TIME_BETWEEN_RACES_CHECKS = 20000 // 20S
 
@@ -18,6 +19,7 @@ app.set('trust proxy' , true) ;
 app.use(express.json()) ;
 app.use(cookieParser()) ;
 app.use(currentUser) ;
+app.use(blacklistRedis.requireNotBlacklisted) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;
 app.use(newRouter) ;

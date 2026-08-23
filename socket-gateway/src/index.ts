@@ -4,6 +4,7 @@ import { natsWrapper } from "./nats-wrapper";
 import { initSocket } from "./socket.io";
 import http from "http"
 import redis from "./redis";
+import blacklistRedis from "./blacklistRedis";
 import { RaceAwaitingListener } from "./events/listeners/raceAwaitingListener";
 import { RaceCancelledListener } from "./events/listeners/raceCancelledListener";
 import { RaceFinishedListener } from "./events/listeners/raceFinishedListener";
@@ -32,7 +33,9 @@ const connect = async () => {
     if (!process.env.REDIS_HOST) {
         throw new Error('REDIS HOST not defined')
     }
-
+    if (!process.env.REDIS_HOST_BLACKLIST) {
+        throw new Error('REDIS HOST BLACKLIST is not defined') ;
+    }
     try {
         await natsWrapper.connect(process.env.NATS_CLUSTER_ID , process.env.NATS_CLIENT_ID , {
             url : process.env.NATS_URL ,
@@ -44,7 +47,7 @@ const connect = async () => {
             process.exit() ;
         })
         await redis.connect() ;
-
+        await blacklistRedis.connect() ;
         redis.on('connect' , () => {
             console.log('connecting to redis') ;
         })

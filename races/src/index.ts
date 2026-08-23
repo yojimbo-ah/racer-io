@@ -8,6 +8,7 @@ import { AnomalyDetectedListener } from "./events/listeners/anomalyDetectedListe
 import RaceCreatedSagaResultListener from "./events/listeners/raceCreatedSagaResult";
 import UserCreationCancelledRacesListener from "./events/listeners/userCreationCancelledRacesListener";
 import redis from "./redis";
+import blacklistRedis from "./blacklistRedis";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -28,6 +29,12 @@ const connect = async () => {
     if (!process.env.MONGO_URI) {
         throw new Error('MONGO URI not diffined') ;
     }
+    if (!process.env.REDIS_HOST) {
+        throw new Error('REDIS HOST is not defined') ;
+    }
+    if (!process.env.REDIS_HOST_BLACKLIST) {
+        throw new Error('REDIS HOST BLACKLIST is not defined') ;
+    } ;
     try {
 
         await natsWrapper.connect(process.env.NATS_CLUSTER_ID , process.env.NATS_CLIENT_ID , {
@@ -62,6 +69,7 @@ const connect = async () => {
 
         mongoose.connect(process.env.MONGO_URI) ;
         await redis.connect() ;
+        await blacklistRedis.connect() ;
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;
         })

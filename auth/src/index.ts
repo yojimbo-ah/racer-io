@@ -3,6 +3,7 @@ import app from "./app";
 import { natsWrapper } from "./nats-wrapper";
 import { CheaterDetectedListener } from "./events/listeners/cheaterDetectedListener";
 import UserCreatedSagaResultListener from "./events/listeners/userCreationResultListener";
+import blacklistRedis from "./blacklistRedis";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -24,13 +25,19 @@ const connect = async () => {
     if (!process.env.NATS_CLIENT_ID) {
         throw new Error('NATS client id not diffined') ;
     }
+    if (!process.env.REDIS_HOST_BLACKLIST) {
+        throw new Error('REDIS HOST BLACKLIST is not defined') ;
+    }
+
     try {
 
         await mongoose.connect(process.env.MONGO_URI!) ;
         await natsWrapper.connect(process.env.NATS_CLUSTER_ID , process.env.NATS_CLIENT_ID , {
             url : process.env.NATS_URL
         }) ;
-
+        // connect to the redis client all the services will connect to this
+        // database so we can check the blacklisted users with sharing state (single source of truth)
+        await blacklistRedis.connect() ;
         natsWrapper.client.on('close' , () => {
             console.log('NATS connection clossed') ;
             process.exit() ;

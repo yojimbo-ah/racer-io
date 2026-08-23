@@ -38,6 +38,8 @@ spec:
                   key: ACCESS_JWT_KEY
             - name: REDIS_HOST
               value: socket-gateway-redis-srv
+            - name: REDIS_HOST_BLACKLIST
+              value: blacklist-redis-srv
 ---
 #kubernets service cluesterip so we can acess the pod
 #default service is clusterip service that why we didint have to
