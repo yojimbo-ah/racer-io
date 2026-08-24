@@ -4,8 +4,9 @@ import { validateRequest , BadRequestError , UserPayload , RefreshPayload} from 
 import jwt from "jsonwebtoken" ;
 import { Password } from "../services/password";
 import User from "../models/user-model";
-import { Expiration , ExpirationNum } from "../consts/jwt-access-time";
+import { Expiration , ExpirationNum , ExpirationCookies} from "../consts/jwt-access-time";
 import Session from "../models/session";
+
 
 const router = express.Router() ;
 
@@ -61,13 +62,13 @@ router.post('/api/users/signin' ,
         req.session = {
             jwt : refreshToken
         }
-        res.cookie('accessToken' , accessToken , {
+        res.cookie(ExpirationCookies.accessToken , accessToken , {
             httpOnly: true,
             secure: true,        // HTTPS only
             sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work  
             maxAge: ExpirationNum.access,
         }) ;
-        res.cookie('refreshToken' , refreshToken , {
+        res.cookie(ExpirationCookies.refreshTken , refreshToken , {
             httpOnly: true,
             secure: true,        // HTTPS only
             sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work

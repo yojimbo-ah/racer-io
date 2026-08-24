@@ -7,3 +7,8 @@ export enum ExpirationNum  {
     refresh = 14 * 24 * 60 * 60 * 1000 , // 14 days 
     access = 15 * 60 * 60 * 1000 
 }
+
+export enum ExpirationCookies {
+    refreshTken = 'refreshToken' ,
+    accessToken = 'accessToken'
+}

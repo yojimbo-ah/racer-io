@@ -7,6 +7,8 @@ import { signUpRouter } from "./routes/singup";
 import { healthzRouter } from "./routes/healthz";
 import { readyzRouter } from "./routes/readyz";
 import { refershRouter } from "./routes/refresh";
+import { logoutAllRouter } from "./routes/logoutAll";
+import { logoutRouter } from "./routes/logout";
 import { errorHandler , NotFoundError } from "@racer-io/common" ;
 
 
@@ -21,6 +23,8 @@ app.use(signUpRouter) ;
 app.use(healthzRouter) ;
 app.use(readyzRouter) ;
 app.use(refershRouter) ;
+app.use(logoutAllRouter) ;
+app.use(logoutRouter) ;
 
 app.all('*' , async () => {
     throw new NotFoundError() ;
