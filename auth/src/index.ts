@@ -4,6 +4,7 @@ import { natsWrapper } from "./nats-wrapper";
 import { CheaterDetectedListener } from "./events/listeners/cheaterDetectedListener";
 import UserCreatedSagaResultListener from "./events/listeners/userCreationResultListener";
 import blacklistRedis from "./blacklistRedis";
+import { startOutboxRelay } from "./outbox/outboxRelay";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -49,6 +50,10 @@ const connect = async () => {
         new CheaterDetectedListener(natsWrapper.client).listen() ;
         new UserCreatedSagaResultListener(natsWrapper.client).listen() ;
 
+        // created the rely to resend the events that had been set in the databse 
+        // but didnt suscess to start the publisher
+        
+        await startOutboxRelay() ;
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;
         })

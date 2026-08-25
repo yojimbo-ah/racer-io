@@ -18,7 +18,7 @@ spec:
         - name: auth-mongo
           image: mongo:latest
           imagePullPolicy : IfNotPresent
-          args: ["--wiredTigerCacheSizeGB", "0.25"]  # ✅ limits mongo cache to 100MB
+          args: ["--wiredTigerCacheSizeGB", "0.25" , "--replSet", "rs0", "--bind_ip_all"]  # ✅ limits mongo cache to 100MB
           resources:
             requests:
               memory: "128Mi"

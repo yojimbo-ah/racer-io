@@ -15,7 +15,7 @@
     ]
   },
   "dependencies": {
-    "@racer-io/common": "^2.0.16",
+    "@racer-io/common": "^2.0.17",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cookie-session": "^2.1.1",
@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.1",
     "node-nats-streaming": "^0.3.2",
+    "opossum": "^10.0.0",
     "ts-node-dev": "^2.0.0"
   },
   "devDependencies": {

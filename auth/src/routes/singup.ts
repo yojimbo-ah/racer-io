@@ -1,12 +1,12 @@
 import express , {Request , Response} from "express" ;
 import { body } from "express-validator";
-import { BadRequestError , validateRequest , UserPayload , RefreshPayload } from "@racer-io/common"
-import { UserCreatedPublisher } from "../events/publishers/userCreatedPublisher";
+import { BadRequestError , validateRequest , UserPayload , RefreshPayload, userCreatedEvent, Subjects } from "@racer-io/common"
 import User  from "../models/user-model";
 import jwt from "jsonwebtoken";
-import { natsWrapper } from "../nats-wrapper";
 import { Expiration , ExpirationCookies, ExpirationNum} from "../consts/jwt-access-time";
 import Session from "../models/session";
+import OutboxEvent from "../models/outbox-model";
+import mongoose from "mongoose";
 
 // will use the refrech token method later 
 // that to reduce query time specilly in race service
@@ -35,7 +35,7 @@ router.post('/api/users/signup' ,
             .withMessage('add your name')
     ] ,
     validateRequest
-    , async (req : Request , res : Response) => {
+    , async (req : Request , res : Response) : Promise<void> => {
         const {email , password , userName} = req.body ;
 
         const existingUser = await User.findOne({email : email}) ;
@@ -44,16 +44,29 @@ router.post('/api/users/signup' ,
         }
 
         const user = User.build({email : email , password : password}) ;        
-        await user.save() ;
-        // exlamation mark means tells typescrips to not to worry about the 
-        // type of JWT_KEY since we already vderified that is it existing and sicne it 
-        // a string or undefined then it is a string
+        // this session will make sure that either will success or not
+        // if both success the publisher will be triggerd by the rely
+        // automaticly
+        const mongoSession = await mongoose.startSession();
+        try {
+            await mongoSession.withTransaction(async () => {
+                await user.save({ session: mongoSession });
 
-        await new UserCreatedPublisher(natsWrapper.client).publish({
-            email , userId : user._id.toString() , userName
-        }) ;
-        // start with the sesion empty 
-        // to get the session id
+                const payload: userCreatedEvent['data'] = {
+                    email: user.email,
+                    userId: String(user._id),
+                    userName: userName
+                };
+
+                await OutboxEvent.build({
+                    eventType: Subjects.userCreated,
+                    payload
+                }).save({ session: mongoSession });
+            });
+        } finally {
+            await mongoSession.endSession();
+        }
+
         const session = Session.build({
             userId : String(user._id) ,
             hashSession : '' ,
