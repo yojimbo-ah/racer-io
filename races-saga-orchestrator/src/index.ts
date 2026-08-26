@@ -5,6 +5,7 @@ import RaceCreatedResultPositionsListener from "./events/race-created/listeners/
 import RaceCreatedSagaListener from "./events/race-created/listeners/raceCreatedSagaListener";
 import UserCreatedResultRacesArchiveListener from "./events/user-created/listeners/userCreatedResultArchiveRacesListener";
 import UserCreatedSagaListener from "./events/user-created/listeners/userCreatedSagaListener";
+import { prepareMongo } from "./outbox/setMongoosePrimary";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -49,7 +50,9 @@ const connect = async () => {
         // user created orchestrators
         new UserCreatedSagaListener(natsWrapper.client).listen() ;
         new UserCreatedResultRacesArchiveListener(natsWrapper.client).listen() ;
-        mongoose.connect(process.env.MONGO_URI) ;
+        // listen to mongo to connect before we configure it 
+        await mongoose.connect(process.env.MONGO_URI) ;
+        await prepareMongo()
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;
         })

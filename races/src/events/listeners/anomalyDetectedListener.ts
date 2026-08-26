@@ -1,4 +1,4 @@
-import { Subjects , Listener , AnomalyDetectedEvent  , userStatus, RaceStatus} from "@racer-io/common";
+import { Subjects , Listener , AnomalyDetectedEvent  , userStatus, RaceStatus, RaceCancelledEvent} from "@racer-io/common";
 import { Message } from "node-nats-streaming";
 import { queueGroupName } from "../queueGroupName";
 import User from "../../models/user-model";
@@ -10,6 +10,8 @@ import { natsWrapper } from "../../nats-wrapper";
 import redis from "../../redis";
 import { RaceRedis } from "../../func/helper/race-functions";
 import { RACE_USER_STATE_EXPIRY_TIME } from "../../../consts/expiry-times";
+import mongoose from "mongoose";
+import OutboxEvent from "../../models/outbox-model";
 
 const WEEK_TIME = 7 * 24 * 60 * 60 * 1000
 const ANOMALY_COUNT_BEFORE_DESACTIVATE = 5 ;
@@ -89,19 +91,32 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
                     throw Error('Couldnt find the right data of the race') ;
                 } ;
                 raceRecord.raceStatus = RaceStatus.RaceCancelled ;
-                await raceRecord.save() ;
-                new RaceCancelledPublisher(natsWrapper.client).publish({
-                    race : {
-                        endPosition : race.endingPos ,
-                        startPos : race.startingPos ,
-                        raceId : raceId ,
-                        raceStatus : RaceStatus.RaceCancelled
-                    } ,
-                    userData : {
-                        user1 : race.user1 ,
-                        user2 : race.user2
-                    }
-                })
+                const mongoSession = await mongoose.startSession() ;
+                try {
+                    // use the transcation so both transcations 
+                    // happen together
+                    await mongoSession.withTransaction(async () => {
+                        await raceRecord.save({session : mongoSession}) ;
+                        const payload : RaceCancelledEvent['data'] = {
+                            race : {
+                                endPosition : race.endingPos ,
+                                startPos : race.startingPos ,
+                                raceId : raceId ,
+                                raceStatus : RaceStatus.RaceCancelled
+                            } ,
+                            userData : {
+                                user1 : race.user1 ,
+                                user2 : race.user2
+                            }
+                        }
+                        await OutboxEvent.build({
+                            eventType : Subjects.RaceCancelled ,
+                            payload
+                        }).save() ;
+                    })
+                } finally {
+                    await mongoSession.endSession() ;
+                }
 
             }
 
