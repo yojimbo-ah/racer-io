@@ -7,14 +7,16 @@
 
 import express , { Request , Response , NextFunction } from "express";
 import { body } from "express-validator";
-import {validateRequest ,  userStatus, RaceStatus, BadRequestError} from "@racer-io/common";
+import {validateRequest ,  userStatus, RaceStatus, BadRequestError, RaceAwaitingEvent ,
+    Subjects
+} from "@racer-io/common";
 import redis from "../redis";
 import { inRegion } from "../func/inRegion";
 import { UserData, UserDataString } from "../events/listeners/positionUpdatedListener";
-import { RaceAwaitingPublisher } from "../events/publishers/raceAwaitingPublisher";
-import { natsWrapper } from "../nats-wrapper";
 import Race from "../models/race-model";
 import { RACE_AWAIT_EXPIRY_TIME } from "../../consts/expiry-times";
+import mongoose from "mongoose";
+import OutboxEvent from "../models/outbox-model";
 
 const MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME = 100 // in meters 
 
@@ -70,13 +72,39 @@ router.post('/api/races/new' ,
         if (!inRegion(result1,startPos,MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME) || !inRegion(result2,startPos,MAXIMUM_LENGTH_BETWEEN_PLAYERS_TO_START_GAME)) {
             throw new BadRequestError('players are not at the right start position')
         }
+
         const race = Race.build({
             user1 : req.currentUser!.id ,
             user2 : req.body.friendId ,
             startPos ,
             endingPos : endPosition
         })
-        await race.save() ;
+        const mongoSession = await mongoose.startSession() ;
+        try {
+            await mongoSession.withTransaction(async () => {
+                await race.save({session : mongoSession}) ;
+                const payload : RaceAwaitingEvent['data'] = {
+                    race : {
+                        endPosition : endPosition ,
+                        startPos ,
+                        raceId : race._id.toString() ,
+                        raceStatus : RaceStatus.RaceAwaiting
+                    } ,
+                    userData : {
+                        user1 : req.currentUser!.id ,
+                        user2 : req.body.friendId
+                    }
+                }
+                await OutboxEvent.build({
+                    eventType: Subjects.RaceAwaitng ,
+                    payload
+                }).save({ session: mongoSession });
+            })
+            
+        } finally {
+            await mongoSession.endSession() ;
+        }
+
 
         // this event will be sent to the position event where it is hooked with the socket connection
         // so we can sent back a response to the frontend client of the friend user so he either accepts
@@ -87,19 +115,7 @@ router.post('/api/races/new' ,
             user2 : req.body.friendId
         }) , 'EX' , RACE_AWAIT_EXPIRY_TIME) ;
 
-        new RaceAwaitingPublisher(natsWrapper.client).publish({
-            userData : {
-                user1 : req.currentUser!.id ,
-                user2 : req.body.friendId
-            } ,
-            race : {
-                startPos ,
-                endPosition ,
-                raceStatus : RaceStatus.RaceAwaiting ,
-                raceId : race._id.toString()
-            }
-        })
-
+        // the event will be published by the outbox relay 
 
         res.status(200).json({message : "race has been created in awaiting status waiting for other users confirmatiosn" , raceId : race._id.toString()}) ;
     }

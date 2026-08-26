@@ -67,8 +67,14 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
                 const race = JSON.parse(raceData) as RaceRedis ;
 
                 const pipeline = redis.pipeline() ;
-                pipeline.hset(race.user1 , {}) ;
-                pipeline.hset(race.user2 , {}) ;
+                pipeline.hset(race.user1 , {
+                    userStatus : userStatus.Idle ,
+                    raceId : ''
+                }) ;
+                pipeline.hset(race.user2 , {
+                    userStatus : userStatus.Idle ,
+                    raceId : ''
+                }) ;
                 pipeline.expire(race.user1 , RACE_USER_STATE_EXPIRY_TIME) ;
                 pipeline.expire(race.user2 , RACE_USER_STATE_EXPIRY_TIME) ;
                 pipeline.del(`race:started:${raceId}`) ;

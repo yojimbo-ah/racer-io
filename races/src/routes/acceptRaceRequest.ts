@@ -6,13 +6,13 @@
 
 import express , { Request , Response , NextFunction } from "express";
 import { body } from "express-validator";
-import { validateRequest , RaceStatus, userStatus } from "@racer-io/common";
+import { validateRequest , RaceStatus, userStatus, RaceStartedEvent, Subjects, RaceCancelledEvent } from "@racer-io/common";
 import redis from "../redis";
 import Race from "../models/race-model";
-import { RaceStartedPublisher } from "../events/publishers/raceStartedPublisher";
-import { RaceCancelledPublisher } from "../events/publishers/RaceCancelledPublisher";
-import { natsWrapper } from "../nats-wrapper";
 import { RACE_STARTED_EXPIRY_TIME, RACE_USER_STATE_EXPIRY_TIME } from "../../consts/expiry-times";
+import mongoose from "mongoose";
+import OutboxEvent from "../models/outbox-model";
+
 
 const router = express.Router() ;
 
@@ -40,10 +40,38 @@ router.post('/api/races/accept-race' ,
 
             if (accept) {
                 // start a new race in the database
+                // the use of transaction to make sure both operations 
+                // happen and also the publish will be automatic 
                 race.raceStatus = RaceStatus.RaceStared
+                const mongoSession = await mongoose.startSession() ;
+                try {
+                    await mongoSession.withTransaction(async () => {
+                        race.save({session : mongoSession}) ;
+                        const payload : RaceStartedEvent['data'] = {
+                            race : {
+                                endPosition : race.endingPos ,
+                                startPos : race.startPos ,
+                                raceId : race._id.toString() ,
+                                raceStatus : RaceStatus.RaceStared
+                            } ,
+                            userData : {
+                                user1 : race.users[0] ,
+                                user2 : race.users[1]
+                            }
+                        }
+                        await OutboxEvent.build({
+                            eventType : Subjects.RaceStarted ,
+                            payload
+                        }).save({session : mongoSession}) ;
+                    })
+                } finally {
+                    await mongoSession.endSession() ;
+                }
 
+                await race.save() ;
+                const pipeline = redis.pipeline() ;
                 // create a new race in reddis database under race:started:raceId
-                await redis.set(`race:started:${race._id.toString()}` , JSON.stringify({
+                pipeline.set(`race:started:${race._id.toString()}` , JSON.stringify({
                     user1 : race.users[0] ,
                     user2 : race.users[1] ,
                     startingPos : race.startPos ,
@@ -51,44 +79,47 @@ router.post('/api/races/accept-race' ,
                 }) , 'EX' , RACE_STARTED_EXPIRY_TIME) ;
                 
                 // saving the race into the set of active races (so it can be treated later)
-                await redis.sadd('races:active' , race._id.toString()) ;
-                race.raceStatus = RaceStatus.RaceStared ;
-                await race.save() ;
-                new RaceStartedPublisher(natsWrapper.client).publish({
-                    race : {
-                        endPosition : race.endingPos ,
-                        startPos : race.startPos ,
-                        raceId : race._id.toString() ,
-                        raceStatus : RaceStatus.RaceStared
-                    } ,
-                    userData : {
-                        user1 : race.users[0] ,
-                        user2 : race.users[1]
-                    }
-                }) ;
-                await redis.hset(race.users[0] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
-                await redis.expire(race.users[0] , RACE_USER_STATE_EXPIRY_TIME) ;
-                await redis.hset(race.users[1] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
-                await redis.expire(race.users[1] , RACE_USER_STATE_EXPIRY_TIME) ;
-                    
+
+                // the use of pipeline for intergrity
+                pipeline.sadd('races:active' , race._id.toString()) ;
+
+                pipeline.hset(race.users[0] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
+                pipeline.expire(race.users[0] , RACE_USER_STATE_EXPIRY_TIME) ;
+                pipeline.hset(race.users[1] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
+                pipeline.expire(race.users[1] , RACE_USER_STATE_EXPIRY_TIME) ;
+
+                await pipeline.exec() ;
                 res.status(200).json({message : "start running" , accepted : true})
             } else {
 
                 // cancell the current race in the database
                 race.raceStatus = RaceStatus.RaceCancelled ;
 
-                new RaceCancelledPublisher(natsWrapper.client).publish({
-                    race : {
-                        endPosition : race.endingPos ,
-                        startPos : race.startPos ,
-                        raceId : race._id.toString() ,
-                        raceStatus : RaceStatus.RaceCancelled
-                    } ,
-                    userData : {
-                        user1 : race.users[0] ,
-                        user2 : race.users[1]
-                    }
-                })
+                const mongoSession = await mongoose.startSession() ;
+                try {
+                    await mongoSession.withTransaction(async () => {
+                        await race.save({session : mongoSession}) ;
+                        const payload : RaceCancelledEvent['data'] = {
+                            race : {
+                                endPosition : race.endingPos ,
+                                startPos : race.startPos ,
+                                raceId : race._id.toString() ,
+                                raceStatus : RaceStatus.RaceCancelled
+                            } ,
+                            userData : {
+                                user1 : race.users[0] ,
+                                user2 : race.users[1]
+                            }
+                        }
+                        await OutboxEvent.build({
+                            eventType : Subjects.RaceCancelled ,
+                            payload
+                        }).save({session : mongoSession}) ;
+                    })
+                } finally {
+                    await mongoSession.endSession() ;
+                }
+
                 res.status(200).json({message : "race cancelled" , accepted : false}) ;
             }
 

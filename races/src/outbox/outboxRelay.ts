@@ -6,6 +6,10 @@ import { Subjects , CheaterDetectedEvent , PositionUpdatedArchiveEvent , RaceAwa
 } from "@racer-io/common";
 import { natsWrapper } from "../nats-wrapper";
 
+// as you can see not all routes and listeners need to modify the data inside the databse
+// so some publishers will still be published directly , no need for the outbox pattren here
+
+
 // events that we need to publish if the databse updates or insert or delete a query 
 import CheaterDetectedPublisher from "../events/publishers/cheaterDetectedPublisher";
 import { PositionUpdatedAchivePublisher } from "../events/publishers/positionUpdatedArchive";
