@@ -9,6 +9,8 @@ import RaceCreatedSagaResultListener from "./events/listeners/raceCreatedSagaRes
 import UserCreationCancelledRacesListener from "./events/listeners/userCreationCancelledRacesListener";
 import redis from "./redis";
 import blacklistRedis from "./blacklistRedis";
+import { prepareMongo } from "./outbox/setMongoosePrimary";
+import { startOutboxRelay } from "./outbox/outboxRelay";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -66,10 +68,16 @@ const connect = async () => {
         .listen() ;
         new UserCreationCancelledRacesListener(natsWrapper.client)
         .listen() ;
+        
+        // connnects to databses and configures it 
+        await mongoose.connect(process.env.MONGO_URI) ;
+        await prepareMongo() ;
 
-        mongoose.connect(process.env.MONGO_URI) ;
         await redis.connect() ;
         await blacklistRedis.connect() ;
+
+        // rely that triggers the publishers
+        await startOutboxRelay() ;
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;
         })
