@@ -7,9 +7,9 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: 
+    matchLabels:
       app: auth-mongo
-  template: 
+  template:
     metadata:
       labels:
         app: auth-mongo
@@ -17,8 +17,8 @@ spec:
       containers:
         - name: auth-mongo
           image: mongo:latest
-          imagePullPolicy : IfNotPresent
-          args: ["--wiredTigerCacheSizeGB", "0.25" , "--replSet", "rs0", "--bind_ip_all"]  # ✅ limits mongo cache to 100MB
+          imagePullPolicy: IfNotPresent
+          args: ["--wiredTigerCacheSizeGB", "0.25" ,"--replSet", "rs0", "--bind_ip_all"]
           resources:
             requests:
               memory: "128Mi"
@@ -29,12 +29,11 @@ spec:
           ports:
             - containerPort: 27017
 ---
-# Service
 apiVersion: v1
 kind: Service
-metadata: 
+metadata:
   name: auth-mongo-srv
-spec: 
+spec:
   selector:
     app: auth-mongo
   ports:
