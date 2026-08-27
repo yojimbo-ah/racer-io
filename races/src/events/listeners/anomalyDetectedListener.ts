@@ -1,4 +1,4 @@
-import { Subjects , Listener , AnomalyDetectedEvent  , userStatus, RaceStatus, RaceCancelledEvent} from "@racer-io/common";
+import { Subjects , Listener , AnomalyDetectedEvent  , userStatus, RaceStatus, RaceCancelledEvent, CheaterDetectedEvent} from "@racer-io/common";
 import { Message } from "node-nats-streaming";
 import { queueGroupName } from "../queueGroupName";
 import User from "../../models/user-model";
@@ -10,7 +10,7 @@ import { natsWrapper } from "../../nats-wrapper";
 import redis from "../../redis";
 import { RaceRedis } from "../../func/helper/race-functions";
 import { RACE_USER_STATE_EXPIRY_TIME } from "../../../consts/expiry-times";
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 import OutboxEvent from "../../models/outbox-model";
 
 const WEEK_TIME = 7 * 24 * 60 * 60 * 1000
@@ -39,10 +39,30 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
 
             // publish cheater detected event
             // and save the user in this service as cheater also 
-            new CheaterDetectedPublisher(natsWrapper.client).publish(data) ;
+
+            // will changed into the oubox relay pattern
+            // new CheaterDetectedPublisher(natsWrapper.client).publish(data) ;
+            
             user.reason_supervision = 'Using unreal human speed' ;
             user.under_supervision = true ;
-            await user.save() ;
+
+            const mongoSession = await mongoose.startSession() ;
+            try {
+                await mongoSession.withTransaction(async () => {
+                    await user.save({session : mongoSession}) ;
+                    const payload : CheaterDetectedEvent['data'] = data ;
+
+                    await OutboxEvent.build({
+                        eventType : Subjects.CheaterDetected ,
+                        payload
+                    }).save() ;
+                })
+            } catch (err) {
+                console.log('error happened' + err) ;
+            } finally {
+                await mongoSession.endSession() ;
+            }
+
             // cheacking if the user is in race
 
             const userStat = await redis.hget(data.userId , 'userStatus') ;

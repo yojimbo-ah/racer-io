@@ -46,37 +46,37 @@ export async function publishAndMark(doc: OutboxEventDocument) {
         // check the event type then we publish depending on the event
         console.log(doc) ;
         // will add the subjects later
-        if (Subjects.CheaterDetected) {
+        if (doc.eventType === Subjects.CheaterDetected) {
             const payload  = doc.payload as  CheaterDetectedEvent['data'] ;
             new CheaterDetectedPublisher(natsWrapper.client).publish(payload) ;
         }
 
-        if (Subjects.PositionUpdatedArchive) {
+        if (doc.eventType === Subjects.PositionUpdatedArchive) {
             const payload = doc.payload as PositionUpdatedArchiveEvent['data'] ;
             new PositionUpdatedAchivePublisher(natsWrapper.client).publish(payload) ;
         }
 
-        if (Subjects.RaceAwaitng) {
+        if (doc.eventType === Subjects.RaceAwaitng) {
             const payload = doc.payload as RaceAwaitingEvent['data'] ;
             new RaceAwaitingPublisher(natsWrapper.client).publish(payload) ;
         }
 
-        if (Subjects.RaceCancelled) {
+        if (doc.eventType === Subjects.RaceCancelled) {
             const payload = doc.payload as RaceCancelledEvent['data'] ;
             new RaceCancelledPublisher(natsWrapper.client).publish(payload) ;
         }
 
-        if (Subjects.RaceFinished) {
+        if (doc.eventType === Subjects.RaceFinished) {
             const payload = doc.payload as RaceFinishedEvent['data'] ;
             new RaceFinishedPublisher(natsWrapper.client).publish(payload) ;
         }
 
-        if (Subjects.RaceStarted) {
+        if  (doc.eventType === Subjects.RaceStarted) {
             const payload = doc.payload as RaceStartedEvent['data'] ;
             new RaceStartedPublisher(natsWrapper.client).publish(payload) ;
         }
 
-        if (SubjectsUserCreationSaga.UserCreatedResultRacesArchive) {
+        if (doc.eventType === SubjectsUserCreationSaga.UserCreatedResultRacesArchive) {
             const payload = doc.payload as UserCreatedResultRacesArchiveEvent['data'] ;
             new UserCreatedResultRacesArchivePublisher(natsWrapper.client).publish(payload) ;
         }

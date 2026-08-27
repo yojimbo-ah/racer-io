@@ -1,10 +1,26 @@
 import OutboxEvent from "../models/outbox-saga-model";
 import { OutboxEventDocument } from "../models/outbox-saga-model";
-import { Subjects , CheaterDetectedEvent , PositionUpdatedArchiveEvent , RaceAwaitingEvent
-    , SubjectsUserCreationSaga, RaceCancelledEvent , RaceFinishedEvent, RaceStartedEvent,
-    UserCreatedResultRacesArchiveEvent
+import { Subjects , SubjectsUserCreationSaga , SubjectRaceSage ,
+    UserCreatedResultRacesArchiveEvent , UserCreatedSagaEvent , UserCreationCancelledArchiveEvent ,
+    UserCreationCancelledRacesEvent , RaceCancelledArchiveEvent , RaceCancelledPositionsEvent ,
+    RaceCreatedCancelledSocketGateway , RaceCreatedSagaEvent , RaceCreatedResultPositionsArchiveEvent,
+    UserCreatedSagaResultEvent,
+    RaceCreatedSagaResultEvent
 } from "@racer-io/common";
 import { natsWrapper } from "../nats-wrapper";
+
+// user-saga
+import UserCreatedResultSagaPublisher from "../events/user-created/publishers/userCreatedResultSagaPublisher";
+import UserCreatedSagaPublisher from "../events/user-created/publishers/userCreatedSagaPublisher";
+import UserCreationCancelledArchivePublisher from "../events/user-created/publishers/userCreationCancelledArchivePublisher";
+import UserCreationCancelledRacesPublisher from "../events/user-created/publishers/userCreationCancelledRacesPublisher";
+
+// race-saga
+import RaceCancelledArchivePublisher from "../events/race-created/publishers/raceCancelledArchivePublisher";
+import RaceCancelledPositionsPublisher from "../events/race-created/publishers/raceCancelledPositionsPublisher";
+import RaceCancelledSocketgatewayPublisher from "../events/race-created/publishers/raceCancelledSocketGateway";
+import RaceCreatedResultSagaPublisher from "../events/race-created/publishers/raceCreatedResultSagaPublisher";
+import RaceCreatedSagaPublisher from "../events/race-created/publishers/raceCreatedSagaPublisher";
 
 // as you can see not all routes and listeners need to modify the data inside the databse
 // so some publishers will still be published directly , no need for the outbox pattren here
@@ -40,7 +56,46 @@ export async function publishAndMark(doc: OutboxEventDocument) {
         // check the event type then we publish depending on the event
         console.log(doc) ;
         // will add the publishers here :
-        
+        // user-created-saga publishers
+        if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSagaResult) {
+            const payload = doc.payload as UserCreatedSagaResultEvent['data'] ;
+            new UserCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
+        }
+        if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSaga) {
+            const payload = doc.payload as UserCreatedSagaEvent['data'] ;
+            new UserCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
+        }
+        if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledArchive) {
+            const payload = doc.payload as UserCreationCancelledArchiveEvent['data'] ;
+            new UserCreationCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
+        }
+        if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledRaces) {
+            const payload = doc.payload as UserCreationCancelledRacesEvent['data'] ;
+            new UserCreationCancelledRacesPublisher(natsWrapper.client).publish(payload) ;
+        }
+
+        // race-created-saga  publishers
+        if (doc.eventType === SubjectRaceSage.raceCancelledArchive) {
+            const payload = doc.payload as RaceCancelledArchiveEvent['data'] ;
+            new RaceCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
+        }
+        if (doc.eventType === SubjectRaceSage.raceCancelledPositions) {
+            const payload = doc.payload as RaceCancelledPositionsEvent['data'] ;
+            new RaceCancelledPositionsPublisher(natsWrapper.client).publish(payload) ;
+        }
+        if (doc.eventType === SubjectRaceSage.raceCreatedCancelledSocketGateway) {
+            const payload = doc.payload as RaceCreatedCancelledSocketGateway['data'] ;
+            new RaceCancelledSocketgatewayPublisher(natsWrapper.client).publish(payload) ;
+        }
+        if (doc.eventType === SubjectRaceSage.raceCreatedSagaResult) {
+            const payload = doc.payload as RaceCreatedSagaResultEvent['data'] ;
+            new RaceCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
+        }
+        if (doc.eventType === SubjectRaceSage.raceCreatedsaga) {
+            const payload = doc.payload as RaceCreatedSagaEvent['data'] ;
+            new RaceCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
+        }
+
         doc.published = true;
         doc.publishedAt = new Date();
         await doc.save();

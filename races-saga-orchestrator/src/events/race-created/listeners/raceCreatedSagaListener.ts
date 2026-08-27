@@ -1,9 +1,13 @@
-import { Listener , RaceStartedEvent , Services, Subjects } from "@racer-io/common";
+import { Listener , RaceStartedEvent , Services, 
+    Subjects , RaceCreatedSagaEvent, SubjectRaceSage } from "@racer-io/common";
 import queueGroupName from "../../queueGroupName";
 import { Message } from "node-nats-streaming";
 import { RaceSaga } from "../../../models/race-saga-model";
 import { SagaStep } from "../../../models/race-saga-model";
 import RaceCreatedSagaPublisher from "../publishers/raceCreatedSagaPublisher";
+import OutboxEvent from "../../../models/outbox-saga-model";
+import mongoose from "mongoose";
+import RaceCreatedResultSagaPublisher from "../publishers/raceCreatedResultSagaPublisher";
 
 // this one listens for the races service to intilize the logique of the saga orchestrator
 
@@ -20,16 +24,45 @@ export default class RaceCreatedSagaListener  extends Listener<RaceStartedEvent>
         // was succeful event traitement also 
         raceSaga.completedSteps.push(SagaStep.RACE_CREATED) ;
         raceSaga.respondedServices.push(Services.races) ;
-        await raceSaga.save() ;
 
-        // publish to positions and archive service
-        await new RaceCreatedSagaPublisher(this.client).publish({
-            sagaId : String(raceSaga._id) ,
-            payload : data
-        });
+        const mongoSession = await mongoose.startSession() ;
+        try {
+            await mongoSession.withTransaction(async () => {
+                await raceSaga.save({session : mongoSession}) ;
+                const payload : RaceCreatedSagaEvent['data'] = {
+                    sagaId : String(raceSaga._id) ,
+                    payload : data
+                } ;
+                await OutboxEvent.build({
+                    eventType : SubjectRaceSage.raceCreatedsaga ,
+                    payload
+                }).save({session : mongoSession}) ;
+            })
+        } catch (err) {
+            // if error happens here we just retrive the reponse to the races-service
+            // nothing will be saved and the service will now that the operation
+            // didnt continue when the saving failed
+            // with status false the service knows that if failed
+            new RaceCreatedResultSagaPublisher(this.client).publish({
+                raceId : data.race.raceId ,
+                status : false
+            })
+
+        } finally {
+            // delete the session and ack the message in both cases
+            await mongoSession.endSession() ;
+            msg.ack() ;
+        }
+
+
+        //  publish to positions and archive service
+        // will be moved to the outbox relay
+        // await new RaceCreatedSagaPublisher(this.client).publish({
+        //     sagaId : String(raceSaga._id) ,
+        //     payload : data
+        // });
 
         // publish to archive service
-        msg.ack() ;
 
     }
 }
