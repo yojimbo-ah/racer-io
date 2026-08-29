@@ -1,8 +1,10 @@
-import { Listener , userCreatedEvent,  Services , Subjects } from "@racer-io/common";
+import { Listener , userCreatedEvent,  Services , Subjects, UserCreatedSagaEvent, SubjectsUserCreationSaga } from "@racer-io/common";
 import queueGroupName from "../../queueGroupName";
 import { Message } from "node-nats-streaming";
 import { UserSaga, UserSagaStep} from "../../../models/user-saga-model";
-import UserCreatedSagaPublisher from "../publishers/userCreatedSagaPublisher";
+import OutboxEvent from "../../../models/outbox-saga-model";
+import mongoose from "mongoose";
+import UserCreatedResultSagaPublisher from "../publishers/userCreatedResultSagaPublisher";
 
 // entry point for this event orchetrator
 
@@ -16,12 +18,30 @@ export default class UserCreatedSagaListener extends Listener<userCreatedEvent> 
             userId : data.userId
         }) ;
         userSaga.completedSteps.push(UserSagaStep.USER_CREATED) ;
-        userSaga.respondedServices.push(Services.auth) ; ;
-        await userSaga.save() ;
-        new UserCreatedSagaPublisher(this.client).publish({
-            payload : data ,
-            sagaId : String(userSaga._id)
-        })
-        msg.ack() ;
+        userSaga.respondedServices.push(Services.auth) ; 
+        const mongoSession = await mongoose.startSession() ;
+        try {
+            await mongoSession.withTransaction(async () => {
+                await userSaga.save({session : mongoSession}) ;
+                const payload : UserCreatedSagaEvent['data'] = {
+                    sagaId : String(userSaga._id) ,
+                    payload : data
+                } ;
+                await OutboxEvent.build({
+                    eventType : SubjectsUserCreationSaga.UserCreatedSaga ,
+                    payload
+                }).save({session : mongoSession}) ;
+            })
+        } catch (err) {
+            // send back the request to the service to tell her it didnt reach the other services
+            new UserCreatedResultSagaPublisher(this.client).publish({
+                sagaId : String(userSaga._id) ,
+                status : false ,
+                userId : data.userId
+            })
+        } finally {
+            await mongoSession.endSession() ;
+            msg.ack() ;
+        }
     }
 }

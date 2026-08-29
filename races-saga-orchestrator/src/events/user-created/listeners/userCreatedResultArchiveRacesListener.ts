@@ -1,9 +1,12 @@
-import { Listener , UserCreatedResultRacesArchiveEvent , SubjectsUserCreationSaga, Services } from "@racer-io/common";
+import { Listener , UserCreatedResultRacesArchiveEvent , SubjectsUserCreationSaga,
+     Services,UserCreatedSagaResultEvent } from "@racer-io/common";
 import queueGroupName from "../../queueGroupName";
 import { Message } from "node-nats-streaming";
 import { UserSaga , UserSagaStep , userSteps} from "../../../models/user-saga-model";
 import UserCreatedResultSagaPublisher from "../publishers/userCreatedResultSagaPublisher";
 import { componsate } from "../componsate";
+import mongoose from "mongoose";
+import OutboxEvent from "../../../models/outbox-saga-model";
 
 // we check the length only beceause we need 3 events so if they were 
 // all treated then we must notify the auth service that  everything went 
@@ -26,36 +29,66 @@ export default class UserCreatedResultRacesArchiveListener extends Listener<User
                 userSaga.respondedServices.push(data.service) ;
                 userSaga.completedSteps.push(UserSagaStep.USER_CREATED_RACES) ;
             } ;
-            await userSaga.save() ;
-            // if all the events had been complted then we send the result as succes 
-            if (userSaga.completedSteps.length === userSteps.length) {
-                // this case all the services responded and the all treated
-                // the data correctly
-                new UserCreatedResultSagaPublisher(this.client).publish({
-                    sagaId : String(userSaga._id) ,
-                    status : true ,
-                    userId : userSaga.userId
+            const mongoSession = await mongoose.startSession() ;
+            try {
+                await mongoSession.withTransaction(async () => {
+                    await userSaga.save({session : mongoSession}) ;
+                    // if all the events had been complted then we send the result as succes 
+                    if (userSaga.completedSteps.length === userSteps.length) {
+                        // this case all the services responded and the all treated
+                        // the data correctly
+                        const payload : UserCreatedSagaResultEvent['data'] = {
+                            sagaId : String(userSaga._id) ,
+                            status : true ,
+                            userId : userSaga.userId
+                        }
+                        await OutboxEvent.build({
+                            eventType : SubjectsUserCreationSaga.UserCreatedSagaResult ,
+                            payload
+                        }).save({session : mongoSession})
+
+                    } else if (userSaga.respondedServices.length === userSteps.length) {
+                        // the we will componsate in this case because the
+                        // all services reponded but not all of them we succes
+                        // exp ( success , fail , success this section of the code will run)
+                        componsate(userSaga , mongoSession) ; 
+                    }
                 })
-            } else if (userSaga.respondedServices.length === userSteps.length) {
-                // the we will componsate in this case because the
-                // all services reponded but not all of them we succes
-                // exp ( success , fail , success this section of the code will run)
-                componsate(userSaga) ; 
+
+            } catch (err) {
+                console.log(err) ;
+            } finally {
+                await mongoSession.endSession() ;
+                msg.ack() ;
             }
+
+
             msg.ack() ;
         } else {
             const userSaga = await UserSaga.findById(data.sagaId) ;
             if (!userSaga) return msg.ack() ;
 
             userSaga.respondedServices.push(data.service) ;
-            await userSaga.save() ;
-            if (userSaga.respondedServices.length === userSteps.length) {
-                // this section of the code will run if at least the last 
-                // event treated was a failure
-                await componsate(userSaga) ;
+            const mongoSession = await mongoose.startSession() ;
+            try {
+                await mongoSession.withTransaction(async () => {
+                    await userSaga.save({session : mongoSession}) ;
+                    if (userSaga.respondedServices.length === userSteps.length) {
+                        // this section of the code will run if at least the last 
+                        // event treated was a failure
+                        await componsate(userSaga , mongoSession) ;
+                    }
+                })
+            } catch (err) {
+                new UserCreatedResultSagaPublisher(this.client).publish({
+                    sagaId : String(userSaga._id) ,
+                    status : false ,
+                    userId : data.userId
+                })
+            } finally {
+                await mongoSession.endSession() ;
+                msg.ack() ;
             }
-            msg.ack() ;
-
         }
     }
 

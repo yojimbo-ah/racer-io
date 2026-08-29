@@ -1,44 +1,50 @@
-import { UserSagaDocument , UserSagaStep} from "../../models/user-saga-model"
-import UserCreationCancelledRacesPublisher from "./publishers/userCreationCancelledRacesPublisher"
-import UserCreationCancelledArchivePublisher from "./publishers/userCreationCancelledArchivePublisher"
-import UserCreatedResultSagaPublisher from "./publishers/userCreatedResultSagaPublisher"
-import { natsWrapper } from "../../nats-wrapper"
+import { UserSagaDocument, UserSagaStep } from "../../models/user-saga-model";
+import { ClientSession } from "mongoose";
+import OutboxEvent from "../../models/outbox-saga-model";
+import { SubjectsUserCreationSaga } from "@racer-io/common"; // adjust to your actual subject enum
 
-
-// the compansation function works as the same logique as the same other componsation 
+// the compensation function works as the same logic as the other compensation
 // functions of other saga orchestrators
-export const componsate = async (userSaga : UserSagaDocument) => {
-    if (
-        userSaga.completedSteps.includes(
-            UserSagaStep.USER_CREATED
-        )
-    ) {
-        new UserCreatedResultSagaPublisher(natsWrapper.client).publish({
-                sagaId : String(userSaga._id) ,
-                status : false ,
-                userId : userSaga.userId
-        })
+export const componsate = async (userSaga: UserSagaDocument, session: ClientSession) => {
+    await userSaga.save({ session });
+
+    const events: { eventType: string; payload: any }[] = [];
+
+    if (userSaga.completedSteps.includes(UserSagaStep.USER_CREATED)) {
+        events.push({
+            eventType: SubjectsUserCreationSaga.UserCreatedSagaResult,
+            payload: {
+                sagaId: String(userSaga._id),
+                status: false,
+                userId: userSaga.userId
+            }
+        });
     }
 
-    if (
-        userSaga.completedSteps.includes(
-            UserSagaStep.USER_CREATED_ARCHIVE
-        )
-    ) {
-        new UserCreationCancelledArchivePublisher(natsWrapper.client).publish({
-            sagaId : String(userSaga._id) ,
-            userId : userSaga.userId
-        }) ;
+    if (userSaga.completedSteps.includes(UserSagaStep.USER_CREATED_ARCHIVE)) {
+        events.push({
+            eventType: SubjectsUserCreationSaga.UserCreationCancelledArchive,
+            payload: {
+                sagaId: String(userSaga._id),
+                userId: userSaga.userId
+            }
+        });
     }
 
-    if (
-        userSaga.completedSteps.includes(
-            UserSagaStep.USER_CREATED_RACES
-        )
-    ) {
-        new UserCreationCancelledRacesPublisher(natsWrapper.client).publish({
-            sagaId : String(userSaga._id) ,
-            userId : userSaga.userId
-        })
+    if (userSaga.completedSteps.includes(UserSagaStep.USER_CREATED_RACES)) {
+        events.push({
+            eventType: SubjectsUserCreationSaga.UserCreationCancelledRaces,
+            payload: {
+                sagaId: String(userSaga._id),
+                userId: userSaga.userId
+            }
+        });
     }
-}
+
+    if (events.length) {
+        await OutboxEvent.insertMany(
+            events.map(e => ({ eventType: e.eventType, payload: e.payload })),
+            { session }
+        );
+    }
+};

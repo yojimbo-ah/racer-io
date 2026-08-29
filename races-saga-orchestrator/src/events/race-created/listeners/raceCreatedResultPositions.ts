@@ -1,11 +1,12 @@
-import { Listener , SubjectRaceSage , RaceCreatedResultPositionsArchiveEvent , Services} from "@racer-io/common";
+import { Listener , SubjectRaceSage , RaceCreatedResultPositionsArchiveEvent , Services, SubjectsUserCreationSaga, RaceCreatedSagaResultEvent} from "@racer-io/common";
 import queueGroupName from "../../queueGroupName";
 import { Message } from "node-nats-streaming";
 import { RaceSaga, Steps } from "../../../models/race-saga-model";
 import { SagaStep } from "../../../models/race-saga-model";
 import RaceCreatedResultSagaPublisher from "../publishers/raceCreatedResultSagaPublisher";
 import { componsate } from "../componsate";
-
+import OutboxEvent from "../../../models/outbox-saga-model";
+import mongoose, { mongo } from "mongoose";
 
 // this listener treateat the events comming from both the services archive and positions at the same time 
 // weither it success or failure status 
@@ -34,24 +35,41 @@ export default class RaceCreatedResultPositionsListener extends Listener <RaceCr
                 raceSaga.respondedServices.push(Services.positions) ;
                 raceSaga.completedSteps.push(SagaStep.POSITIONS_INITIALIZED) ;
             }
+            const mongoSession = await mongoose.startSession() ;
+            // we will use transactions for data integrity
+            try {
+                await mongoSession.withTransaction(async () => {
+                    await raceSaga.save({session : mongoSession}) ;
+                    // add more cheks here bceause currenlty we just check the length
+                    if (raceSaga.completedSteps.length === Steps.length) {
+                        // in case of all steps had been done
+                        // notify the race service
+                        const payload : RaceCreatedSagaResultEvent['data'] = {
+                            raceId : raceSaga.raceId ,
+                            status : true
+                        }
+                        await OutboxEvent.build({
+                            eventType : SubjectRaceSage.raceCreatedSagaResult ,
+                            payload
+                        }).save({session : mongoSession}) ;
 
-            // in case all the steps had been done
-            await raceSaga.save() ;
-            // add more cheks here bceause currenlty we just check the length
-            if (raceSaga.completedSteps.length === Steps.length) {
-                // in case of all steps had been done
-                // notify the race service
-                new RaceCreatedResultSagaPublisher(this.client).publish({
-                    raceId : raceSaga.raceId ,
-                    status : true
+                    } else if (raceSaga.respondedServices.length === Steps.length) {
+                        // simlair to the userCreated service read the documentation 
+                        // there
+                        // pass the session to make sure the componsation
+                        // is always synced with the databse and everything is well structured
+                        await componsate(raceSaga , mongoSession) ;
+                    }
                 })
-
-            } else if (raceSaga.respondedServices.length === Steps.length) {
-                // simlair to the userCreated service read the documentation 
-                // there
-                await componsate(raceSaga) ;
+            } catch (err) {
+                // error here cancsale everything and send the error back
+                // if componsationg fails , it will be treated later when the realy happens 
+                // again beceause the outbox event will be set as not treated
+                console.log(err) ;
+            } finally {
+                await mongoSession.endSession() ;
+                msg.ack() ;
             }
-            msg.ack() ;
 
         } else {
             // case of failure in the service componsate but after the every other service has sent back thare request
@@ -64,13 +82,25 @@ export default class RaceCreatedResultPositionsListener extends Listener <RaceCr
             // push the service then check the length if it 3 then all the services had
             // responded 
             raceSaga.respondedServices.push(data.service) ;
-            await raceSaga.save() ;
-            if (raceSaga.respondedServices.length === Steps.length) {
-                // means the other service has replied 
-                await componsate(raceSaga) ;
+            const mongoSession = await mongoose.startSession() ;
+            try {
+                await mongoSession.withTransaction(async () => {
+                    await raceSaga.save({session : mongoSession}) ;
+                    if (raceSaga.respondedServices.length === Steps.length) {
+                        // means the other service has replied 
+                        await componsate(raceSaga , mongoSession) ;
 
+                    }
+                })
+            } catch (err) {
+                // error cancel everything here
+                // still didnt know what to do in this section of the 
+                // app 
+                console.log(err)
+            } finally {
+                await mongoSession.endSession() ;
+                msg.ack() ;
             }
-            // else we ack and we wait the other service to reply 
             msg.ack()
         }
     }

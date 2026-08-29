@@ -4,7 +4,6 @@ import queueGroupName from "../../queueGroupName";
 import { Message } from "node-nats-streaming";
 import { RaceSaga } from "../../../models/race-saga-model";
 import { SagaStep } from "../../../models/race-saga-model";
-import RaceCreatedSagaPublisher from "../publishers/raceCreatedSagaPublisher";
 import OutboxEvent from "../../../models/outbox-saga-model";
 import mongoose from "mongoose";
 import RaceCreatedResultSagaPublisher from "../publishers/raceCreatedResultSagaPublisher";
