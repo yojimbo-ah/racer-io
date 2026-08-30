@@ -6,6 +6,8 @@ import RaceCreatedSagaListener from "./events/race-created/listeners/raceCreated
 import UserCreatedResultRacesArchiveListener from "./events/user-created/listeners/userCreatedResultArchiveRacesListener";
 import UserCreatedSagaListener from "./events/user-created/listeners/userCreatedSagaListener";
 import { prepareMongo } from "./outbox/setMongoosePrimary";
+import { startOutboxRelay } from "./outbox/outboxRelay";
+import { connectMongo } from "./outbox/connectMongo";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -26,6 +28,9 @@ const connect = async () => {
     if (!process.env.MONGO_URI) {
         throw new Error('MONGO URI not diffined') ;
     }
+    if (!process.env.MONGO_SRV) {
+        throw new Error('MONGO SRV is not deffined') ;
+    }
     try {
 
         await natsWrapper.connect(process.env.NATS_CLUSTER_ID , process.env.NATS_CLIENT_ID , {
@@ -40,6 +45,8 @@ const connect = async () => {
         process.on('SIGINT' , () => natsWrapper.client.close()) ;
         process.on('SIGTERM' , () => natsWrapper.client.close()) ;
 
+        await connectMongo(process.env.MONGO_URI) ;
+        await prepareMongo()
 
         // all the listeners that the service currently uses 
 
@@ -51,8 +58,7 @@ const connect = async () => {
         new UserCreatedSagaListener(natsWrapper.client).listen() ;
         new UserCreatedResultRacesArchiveListener(natsWrapper.client).listen() ;
         // listen to mongo to connect before we configure it 
-        await mongoose.connect(process.env.MONGO_URI) ;
-        await prepareMongo()
+        await startOutboxRelay()
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;
         })

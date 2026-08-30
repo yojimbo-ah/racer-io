@@ -20,6 +20,8 @@ spec:
           env:
             - name: MONGO_URI
               value: 'mongodb://races-mongo-srv:27017/races'
+            - name: MONGO_SRV
+              value: 'races-mongo-srv:27017'
             - name: NATS_CLUSTER_ID
               value: 'racer.io'
             - name: NATS_CLIENT_ID

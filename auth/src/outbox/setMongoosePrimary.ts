@@ -35,7 +35,7 @@ export const prepareMongo = async () => {
                         members: [
                             {
                                 _id: 0,
-                                host: "auth-mongo-srv:27017"
+                                host: process.env.MONGO_SRV
                             }
                         ]
                     }

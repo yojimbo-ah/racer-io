@@ -11,6 +11,7 @@ import redis from "./redis";
 import blacklistRedis from "./blacklistRedis";
 import { prepareMongo } from "./outbox/setMongoosePrimary";
 import { startOutboxRelay } from "./outbox/outboxRelay";
+import { connectMongo } from "./outbox/connectMongo";
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -37,6 +38,9 @@ const connect = async () => {
     if (!process.env.REDIS_HOST_BLACKLIST) {
         throw new Error('REDIS HOST BLACKLIST is not defined') ;
     } ;
+    if (!process.env.MONGO_SRV) {
+        throw new Error('MONGO SRV is not diffiend') ;
+    }
     try {
 
         await natsWrapper.connect(process.env.NATS_CLUSTER_ID , process.env.NATS_CLIENT_ID , {
@@ -70,7 +74,7 @@ const connect = async () => {
         .listen() ;
         
         // connnects to databses and configures it 
-        await mongoose.connect(process.env.MONGO_URI) ;
+        await connectMongo(process.env.MONGO_URI) ;
         await prepareMongo() ;
 
         await redis.connect() ;

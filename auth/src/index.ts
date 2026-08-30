@@ -30,7 +30,9 @@ const connect = async () => {
     if (!process.env.REDIS_HOST_BLACKLIST) {
         throw new Error('REDIS HOST BLACKLIST is not defined') ;
     }
-
+    if (!process.env.MONGO_SRV) {
+        throw new Error('MONGO SRV is not deffined') ;
+    }
 
     await mongoose.connect(process.env.MONGO_URI!) ;
     // configure the databse so we can handle the watch and changes in it 

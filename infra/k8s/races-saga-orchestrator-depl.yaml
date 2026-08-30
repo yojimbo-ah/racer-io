@@ -28,6 +28,8 @@ spec:
               value: 'nats://nats-srv:4222'
             - name: MONGO_URI
               value: 'mongodb://races-saga-orchestrator-mongo-srv:27017/races'
+            - name: MONGO_SRV
+              value: 'races-saga-orchestrator-mongo-srv:27017'
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:
