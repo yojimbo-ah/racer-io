@@ -5,7 +5,8 @@ import { Subjects , CheaterDetectedEvent , PositionUpdatedArchiveEvent , RaceAwa
     UserCreatedResultRacesArchiveEvent
 } from "@racer-io/common";
 import { natsWrapper } from "../nats-wrapper";
-
+import { SpanStatusCode } from "@opentelemetry/api";
+import { tracer } from "../utils/tracer";
 // as you can see not all routes and listeners need to modify the data inside the databse
 // so some publishers will still be published directly , no need for the outbox pattren here
 
@@ -42,51 +43,61 @@ export async function startOutboxRelay() {
 }
 
 export async function publishAndMark(doc: OutboxEventDocument) {
-    try {
-        // check the event type then we publish depending on the event
-        console.log(doc) ;
-        // will add the subjects later
-        if (doc.eventType === Subjects.CheaterDetected) {
-            const payload  = doc.payload as  CheaterDetectedEvent['data'] ;
-            new CheaterDetectedPublisher(natsWrapper.client).publish(payload) ;
-        }
+    tracer.startActiveSpan('outbox.publishAndMark' , async (span) => {
+        try {
+            // check the event type then we publish depending on the event
+            span.setAttribute('outbox.event_type' , doc.eventType) ;
+            span.setAttribute('outbox.event_id' , String(doc._id)) ;
+            span.setAttribute('outbox.attemps' , doc.attempts ?? 0) ;
+            console.log(doc) ;
+            // will add the subjects later
+            if (doc.eventType === Subjects.CheaterDetected) {
+                const payload  = doc.payload as  CheaterDetectedEvent['data'] ;
+                new CheaterDetectedPublisher(natsWrapper.client).publish(payload) ;
+            }
 
-        if (doc.eventType === Subjects.PositionUpdatedArchive) {
-            const payload = doc.payload as PositionUpdatedArchiveEvent['data'] ;
-            new PositionUpdatedAchivePublisher(natsWrapper.client).publish(payload) ;
-        }
+            if (doc.eventType === Subjects.PositionUpdatedArchive) {
+                const payload = doc.payload as PositionUpdatedArchiveEvent['data'] ;
+                new PositionUpdatedAchivePublisher(natsWrapper.client).publish(payload) ;
+            }
 
-        if (doc.eventType === Subjects.RaceAwaitng) {
-            const payload = doc.payload as RaceAwaitingEvent['data'] ;
-            new RaceAwaitingPublisher(natsWrapper.client).publish(payload) ;
-        }
+            if (doc.eventType === Subjects.RaceAwaitng) {
+                const payload = doc.payload as RaceAwaitingEvent['data'] ;
+                new RaceAwaitingPublisher(natsWrapper.client).publish(payload) ;
+            }
 
-        if (doc.eventType === Subjects.RaceCancelled) {
-            const payload = doc.payload as RaceCancelledEvent['data'] ;
-            new RaceCancelledPublisher(natsWrapper.client).publish(payload) ;
-        }
+            if (doc.eventType === Subjects.RaceCancelled) {
+                const payload = doc.payload as RaceCancelledEvent['data'] ;
+                new RaceCancelledPublisher(natsWrapper.client).publish(payload) ;
+            }
 
-        if (doc.eventType === Subjects.RaceFinished) {
-            const payload = doc.payload as RaceFinishedEvent['data'] ;
-            new RaceFinishedPublisher(natsWrapper.client).publish(payload) ;
-        }
+            if (doc.eventType === Subjects.RaceFinished) {
+                const payload = doc.payload as RaceFinishedEvent['data'] ;
+                new RaceFinishedPublisher(natsWrapper.client).publish(payload) ;
+            }
 
-        if  (doc.eventType === Subjects.RaceStarted) {
-            const payload = doc.payload as RaceStartedEvent['data'] ;
-            new RaceStartedPublisher(natsWrapper.client).publish(payload) ;
-        }
+            if  (doc.eventType === Subjects.RaceStarted) {
+                const payload = doc.payload as RaceStartedEvent['data'] ;
+                new RaceStartedPublisher(natsWrapper.client).publish(payload) ;
+            }
 
-        if (doc.eventType === SubjectsUserCreationSaga.UserCreatedResultRacesArchive) {
-            const payload = doc.payload as UserCreatedResultRacesArchiveEvent['data'] ;
-            new UserCreatedResultRacesArchivePublisher(natsWrapper.client).publish(payload) ;
-        }
+            if (doc.eventType === SubjectsUserCreationSaga.UserCreatedResultRacesArchive) {
+                const payload = doc.payload as UserCreatedResultRacesArchiveEvent['data'] ;
+                new UserCreatedResultRacesArchivePublisher(natsWrapper.client).publish(payload) ;
+            }
 
-        doc.published = true;
-        doc.publishedAt = new Date();
-        await doc.save();
-    } catch (err) {
-        doc.attempts += 1;
-        doc.lastError = String(err);
-        await doc.save();
-    }
+            doc.published = true;
+            doc.publishedAt = new Date();
+            await doc.save();
+            span.setStatus({code : SpanStatusCode.OK}) ;
+        } catch (err) {
+            doc.attempts += 1;
+            doc.lastError = String(err);
+            await doc.save();
+            span.setStatus({code : SpanStatusCode.ERROR , message : (err as Error).message}) ;
+        } finally {
+            span.end() ;
+        }
+    })
+
 }

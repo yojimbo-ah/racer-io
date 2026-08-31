@@ -8,6 +8,8 @@ import { Subjects , SubjectsUserCreationSaga , SubjectRaceSage ,
     RaceCreatedSagaResultEvent
 } from "@racer-io/common";
 import { natsWrapper } from "../nats-wrapper";
+import { SpanStatusCode } from "@opentelemetry/api";
+import { tracer } from "../utils/tracer";
 
 // user-saga
 import UserCreatedResultSagaPublisher from "../events/user-created/publishers/userCreatedResultSagaPublisher";
@@ -52,56 +54,66 @@ export async function startOutboxRelay() {
 }
 
 export async function publishAndMark(doc: OutboxEventDocument) {
-    try {
-        // check the event type then we publish depending on the event
-        console.log(doc) ;
-        // will add the publishers here :
-        // user-created-saga publishers
-        if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSagaResult) {
-            const payload = doc.payload as UserCreatedSagaResultEvent['data'] ;
-            new UserCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
-        }
-        if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSaga) {
-            const payload = doc.payload as UserCreatedSagaEvent['data'] ;
-            new UserCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
-        }
-        if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledArchive) {
-            const payload = doc.payload as UserCreationCancelledArchiveEvent['data'] ;
-            new UserCreationCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
-        }
-        if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledRaces) {
-            const payload = doc.payload as UserCreationCancelledRacesEvent['data'] ;
-            new UserCreationCancelledRacesPublisher(natsWrapper.client).publish(payload) ;
-        }
+    tracer.startActiveSpan('outbox.publishAndMard' , async (span) => {
+        try {
+            span.setAttribute('outbox.event_type' , doc.eventType) ;
+            span.setAttribute('outbox.event_id' , String(doc._id)) ;
+            span.setAttribute('outbox.attemps' , doc.attempts ?? 0) ;
+            // check the event type then we publish depending on the event
+            console.log(doc) ;
+            // will add the publishers here :
+            // user-created-saga publishers
+            if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSagaResult) {
+                const payload = doc.payload as UserCreatedSagaResultEvent['data'] ;
+                new UserCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
+            }
+            if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSaga) {
+                const payload = doc.payload as UserCreatedSagaEvent['data'] ;
+                new UserCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
+            }
+            if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledArchive) {
+                const payload = doc.payload as UserCreationCancelledArchiveEvent['data'] ;
+                new UserCreationCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
+            }
+            if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledRaces) {
+                const payload = doc.payload as UserCreationCancelledRacesEvent['data'] ;
+                new UserCreationCancelledRacesPublisher(natsWrapper.client).publish(payload) ;
+            }
 
-        // race-created-saga  publishers
-        if (doc.eventType === SubjectRaceSage.raceCancelledArchive) {
-            const payload = doc.payload as RaceCancelledArchiveEvent['data'] ;
-            new RaceCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
-        }
-        if (doc.eventType === SubjectRaceSage.raceCancelledPositions) {
-            const payload = doc.payload as RaceCancelledPositionsEvent['data'] ;
-            new RaceCancelledPositionsPublisher(natsWrapper.client).publish(payload) ;
-        }
-        if (doc.eventType === SubjectRaceSage.raceCreatedCancelledSocketGateway) {
-            const payload = doc.payload as RaceCreatedCancelledSocketGateway['data'] ;
-            new RaceCancelledSocketgatewayPublisher(natsWrapper.client).publish(payload) ;
-        }
-        if (doc.eventType === SubjectRaceSage.raceCreatedSagaResult) {
-            const payload = doc.payload as RaceCreatedSagaResultEvent['data'] ;
-            new RaceCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
-        }
-        if (doc.eventType === SubjectRaceSage.raceCreatedsaga) {
-            const payload = doc.payload as RaceCreatedSagaEvent['data'] ;
-            new RaceCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
-        }
+            // race-created-saga  publishers
+            if (doc.eventType === SubjectRaceSage.raceCancelledArchive) {
+                const payload = doc.payload as RaceCancelledArchiveEvent['data'] ;
+                new RaceCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
+            }
+            if (doc.eventType === SubjectRaceSage.raceCancelledPositions) {
+                const payload = doc.payload as RaceCancelledPositionsEvent['data'] ;
+                new RaceCancelledPositionsPublisher(natsWrapper.client).publish(payload) ;
+            }
+            if (doc.eventType === SubjectRaceSage.raceCreatedCancelledSocketGateway) {
+                const payload = doc.payload as RaceCreatedCancelledSocketGateway['data'] ;
+                new RaceCancelledSocketgatewayPublisher(natsWrapper.client).publish(payload) ;
+            }
+            if (doc.eventType === SubjectRaceSage.raceCreatedSagaResult) {
+                const payload = doc.payload as RaceCreatedSagaResultEvent['data'] ;
+                new RaceCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
+            }
+            if (doc.eventType === SubjectRaceSage.raceCreatedsaga) {
+                const payload = doc.payload as RaceCreatedSagaEvent['data'] ;
+                new RaceCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
+            }
 
-        doc.published = true;
-        doc.publishedAt = new Date();
-        await doc.save();
-    } catch (err) {
-        doc.attempts += 1;
-        doc.lastError = String(err);
-        await doc.save();
-    }
+            doc.published = true;
+            doc.publishedAt = new Date();
+            await doc.save();
+            span.setStatus({code : SpanStatusCode.OK}) ;
+        } catch (err) {
+            doc.attempts += 1;
+            doc.lastError = String(err);
+            await doc.save();
+            span.setStatus({code : SpanStatusCode.ERROR , message : (err as Error).message}) ;
+        } finally {
+            span.end() ;
+        }
+    })
+
 }

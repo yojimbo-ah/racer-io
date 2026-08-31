@@ -5,7 +5,6 @@ import { anomalyDetection } from "../../func/helper/anomalyDetection";
 import redis from "../../redis";
 import PositionUpdatedPublisher from "../publishers/PositionUpdatedPublisher";
 import { RACE_INTERVAL_EXPIRY_TIME } from "../../../consts/expiry-times";
-import { userStatus } from "@racer-io/common";
 
 export class PositionUpdatedSocketListener extends Listener<PositionUpdatedSocketEvent> {
     subject = Subjects.PositionUpdatedSocket as const ;
