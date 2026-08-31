@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-lgtm-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-lgtm
+  template:
+    metadata:
+      labels:
+        app: otel-lgtm
+    spec:
+      containers:
+        - name: otel-lgtm
+          image: grafana/otel-lgtm:latest
+          ports:
+            - containerPort: 3000  # Grafana UI
+            - containerPort: 4318  # OTLP HTTP
+            - containerPort: 4317  # OTLP gRPC
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-lgtm-srv
+spec:
+  selector:
+    app: otel-lgtm
+  ports:
+    - name: grafana
+      port: 3001
+      targetPort: 3000
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
