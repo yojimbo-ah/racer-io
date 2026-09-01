@@ -1,7 +1,7 @@
+import sdk from "./tracing";
 import {app} from "./app";
 import { natsWrapper } from "./nats-wrapper";
 import { PositionUpdatedListener } from "./events/listeners/positionUpdatedListener";
-import mongoose from "mongoose";
 import { UserCreatedListener } from "./events/listeners/userCreatedListener";
 import { UserUpdatedListener } from "./events/listeners/userUpdatedListener";
 import { AnomalyDetectedListener } from "./events/listeners/anomalyDetectedListener";

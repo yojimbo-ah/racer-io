@@ -1,6 +1,6 @@
+import sdk from "./tracing";
 import {app} from "./app";
 import { natsWrapper } from "./nats-wrapper";
-import mongoose from "mongoose";
 import RaceCreatedResultPositionsListener from "./events/race-created/listeners/raceCreatedResultPositions";
 import RaceCreatedSagaListener from "./events/race-created/listeners/raceCreatedSagaListener";
 import UserCreatedResultRacesArchiveListener from "./events/user-created/listeners/userCreatedResultArchiveRacesListener";
