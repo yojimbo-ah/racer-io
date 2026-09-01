@@ -30,6 +30,12 @@ spec:
               value: 'mongodb://races-saga-orchestrator-mongo-srv:27017/races'
             - name: MONGO_SRV
               value: 'races-saga-orchestrator-mongo-srv:27017'
+            - name: OTEL_COLLECTOR_URL
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_SERVICE_NAME
+              value: "races-saga-orchestrator-service"
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:

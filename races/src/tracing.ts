@@ -6,11 +6,21 @@ import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
-const collectorUrl = process.env.OTEL_COLLECTOR_URL || 'http://otel-lgtm-srv:4318';
+const normalizeCollectorUrl = () => {
+  const rawUrl =
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
+    process.env.OTEL_COLLECTOR_URL ||
+    'http://otel-lgtm-srv:4318';
+
+  return rawUrl.replace(/\/+$/, '');
+};
+
+const serviceName = process.env.OTEL_SERVICE_NAME || 'races-service';
+const collectorUrl = normalizeCollectorUrl();
 
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: 'races-service',
+    [ATTR_SERVICE_NAME]: serviceName,
   }),
   traceExporter: new OTLPTraceExporter({ url: `${collectorUrl}/v1/traces` }),
   metricReader: new PeriodicExportingMetricReader({
@@ -19,8 +29,19 @@ const sdk = new NodeSDK({
   instrumentations: [getNodeAutoInstrumentations()],
 });
 
-// lunching opentelementry monitering
-sdk.start();
+if (process.env.OTEL_SDK_DISABLED !== 'true') {
+  sdk.start();
+}
 
-process.on('SIGTERM', () => sdk.shutdown().finally(() => process.exit(0)));
+const shutdown = async () => {
+  try {
+    await sdk.shutdown();
+  } finally {
+    process.exit(0);
+  }
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
 export default sdk

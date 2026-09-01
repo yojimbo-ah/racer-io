@@ -26,6 +26,12 @@ spec:
                   fieldPath: metadata.name
             - name: NATS_URL
               value: 'nats://nats-srv:4222'
+            - name: OTEL_COLLECTOR_URL
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_SERVICE_NAME
+              value: "auth-service"
             - name: MONGO_URI
               value: 'mongodb://auth-mongo-srv:27017/auth?directConnection=true&replicaSet=rs0'
             - name : MONGO_SRV

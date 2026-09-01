@@ -36,6 +36,12 @@ spec:
                 secretKeyRef:
                   name: access-jwt-key
                   key: ACCESS_JWT_KEY
+            - name: OTEL_COLLECTOR_URL
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_SERVICE_NAME
+              value: "positions-service"
             - name: REDIS_HOST
               value: positions-redis-srv
             - name: REDIS_HOST_BLACKLIST
