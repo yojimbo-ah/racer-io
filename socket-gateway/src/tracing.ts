@@ -1,15 +1,13 @@
-import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
+import { diag, DiagConsoleLogger, DiagLogLevel, propagation } from "@opentelemetry/api";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+import { W3CTraceContextPropagator } from "@opentelemetry/core";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
-import { propagation } from '@opentelemetry/api';
-import { W3CTraceContextPropagator } from '@opentelemetry/core';
 
-// Register global propagator so traceparent headers are generated
 propagation.setGlobalPropagator(new W3CTraceContextPropagator());
 
 const normalizeCollectorUrl = () => {
@@ -21,7 +19,7 @@ const normalizeCollectorUrl = () => {
   return rawUrl.replace(/\/+$/, "");
 };
 
-const serviceName = process.env.OTEL_SERVICE_NAME || "auth-service";
+const serviceName = process.env.OTEL_SERVICE_NAME || "socket-gateway-service";
 const collectorUrl = normalizeCollectorUrl();
 
 if (process.env.NODE_ENV !== "test") {

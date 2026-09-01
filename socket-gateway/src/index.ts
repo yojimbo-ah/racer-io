@@ -1,3 +1,4 @@
+import "./tracing";
 import app from "./app";
 import process from "process";
 import { natsWrapper } from "./nats-wrapper";

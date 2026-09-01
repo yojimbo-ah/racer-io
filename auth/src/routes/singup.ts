@@ -7,7 +7,10 @@ import { Expiration , ExpirationCookies, ExpirationNum} from "../consts/jwt-acce
 import Session from "../models/session";
 import OutboxEvent from "../models/outbox-model";
 import mongoose from "mongoose";
-
+// used to send the tracing and save it inside the outbox model
+// so it can be read and sent by the publisher later inside the relay 
+// function
+import { context, propagation } from "@opentelemetry/api";
 // will use the refrech token method later 
 // that to reduce query time specilly in race service
 // since now am using a normal token login i cant rely on it to see if 
@@ -57,10 +60,14 @@ router.post('/api/users/signup' ,
                     userId: String(user._id),
                     userName: userName
                 };
-
+                // used to pass the carrier to the event that gonna publish
+                // and it just saved by the outbox model only 
+                const carrier: Record<string, string> = {};
+                propagation.inject(context.active(), carrier);
                 await OutboxEvent.build({
                     eventType: Subjects.userCreated,
-                    payload
+                    payload ,
+                    traceCarrier : carrier
                 }).save({ session: mongoSession });
             });
         } finally {

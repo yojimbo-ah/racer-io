@@ -3,12 +3,16 @@ import { SubjectRaceSage , Subjects , SubjectsUserCreationSaga , AllSubjectValue
 
 interface OutboxEventAttrs {
     eventType: SubjectRaceSage | Subjects | SubjectsUserCreationSaga,
-    payload: Record<string, unknown>
+    payload: Record<string, unknown> ,
+    // this field is used to pass the carrier 
+    // to later pass it to the event so we can track it across services
+    traceCarrier ?: Record<string,unknown>
 }
 
 export interface OutboxEventDocument extends Document {
     eventType: AllSubjects,
     payload: Record<string, unknown>,
+    traceCarrier ?: Record<string , unknown> ,
     published: boolean,
     publishedAt?: Date,
     createdAt: Date,
@@ -30,6 +34,10 @@ const outboxEventSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.Mixed,
         required: true
     },
+    traceCarrier : {
+        type : mongoose.Schema.Types.Mixed ,
+        required : false
+    } ,
     published: {
         type: Boolean,
         default: false
@@ -51,6 +59,7 @@ const outboxEventSchema = new mongoose.Schema({
         required: false
     }
 })
+// events expire and are treated by time when the relay function is called back
 
 outboxEventSchema.index({ published: 1, createdAt: 1 });
 outboxEventSchema.index({ publishedAt: 1 }, { expireAfterSeconds: 3600 });

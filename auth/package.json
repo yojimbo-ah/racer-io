@@ -21,7 +21,7 @@
     "@opentelemetry/resources": "^2.11.0",
     "@opentelemetry/sdk-node": "^0.222.0",
     "@opentelemetry/semantic-conventions": "^1.43.0",
-    "@racer-io/common": "^2.0.19",
+    "@racer-io/common": "^2.0.20",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cookie-session": "^2.1.1",
