@@ -6,7 +6,7 @@ import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
-const collectorUrl = process.env.OTEL_COLLECTOR_URL || 'http://otel-collector-srv:4318';
+const collectorUrl = process.env.OTEL_COLLECTOR_URL || 'http://otel-lgtm-srv:4318';
 
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({
