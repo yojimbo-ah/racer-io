@@ -19,4 +19,8 @@ const sdk = new NodeSDK({
   instrumentations: [getNodeAutoInstrumentations()],
 });
 
-export default sdk ;
+// lunching opentelementry monitering
+sdk.start();
+
+process.on('SIGTERM', () => sdk.shutdown().finally(() => process.exit(0)));
+export default sdk

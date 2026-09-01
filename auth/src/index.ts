@@ -1,3 +1,4 @@
+import sdk from "./tracing"
 import mongoose from "mongoose";
 import app from "./app";
 import { natsWrapper } from "./nats-wrapper";
@@ -6,7 +7,7 @@ import UserCreatedSagaResultListener from "./events/listeners/userCreationResult
 import blacklistRedis from "./blacklistRedis";
 import { startOutboxRelay } from "./outbox/outboxRelay";
 import { prepareMongo } from "./outbox/setMongoosePrimary";
-import sdk from "./tracing";
+
 
 const connect = async () => {
     // making sure that the enviromental variables exist 
@@ -54,10 +55,6 @@ const connect = async () => {
     process.on('SIGINT' , () => natsWrapper.client.close()) ;
     process.on('SIGTERM' , () => natsWrapper.client.close()) ;
 
-    // lunching opentelementry monitering
-    sdk.start();
-
-    process.on('SIGTERM', () => sdk.shutdown().finally(() => process.exit(0)));
 
     new CheaterDetectedListener(natsWrapper.client).listen() ;
     new UserCreatedSagaResultListener(natsWrapper.client).listen() ;
