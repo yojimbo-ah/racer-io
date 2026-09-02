@@ -97,7 +97,8 @@ router.post('/api/races/new' ,
                 }
                 await OutboxEvent.build({
                     eventType: Subjects.RaceAwaitng ,
-                    payload
+                    payload,
+                    traceCarrier: (req as any)._traceCarrier
                 }).save({ session: mongoSession });
             })
             

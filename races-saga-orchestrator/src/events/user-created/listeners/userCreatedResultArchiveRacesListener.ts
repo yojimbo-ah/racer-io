@@ -44,7 +44,8 @@ export default class UserCreatedResultRacesArchiveListener extends Listener<User
                         }
                         await OutboxEvent.build({
                             eventType : SubjectsUserCreationSaga.UserCreatedSagaResult ,
-                            payload
+                            payload,
+                            traceCarrier: (data as any)._traceCarrier
                         }).save({session : mongoSession})
 
                     } else if (userSaga.respondedServices.length === userSteps.length) {
@@ -80,10 +81,11 @@ export default class UserCreatedResultRacesArchiveListener extends Listener<User
                     }
                 })
             } catch (err) {
-                new UserCreatedResultSagaPublisher(this.client).publish({
+                await new UserCreatedResultSagaPublisher(this.client).publish({
                     sagaId : String(userSaga._id) ,
                     status : false ,
-                    userId : data.userId
+                    userId : data.userId,
+                    _traceCarrier: (data as any)._traceCarrier
                 })
             } finally {
                 await mongoSession.endSession() ;

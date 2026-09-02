@@ -34,7 +34,8 @@ export default class RaceCreatedSagaListener  extends Listener<RaceStartedEvent>
                 } ;
                 await OutboxEvent.build({
                     eventType : SubjectRaceSage.raceCreatedsaga ,
-                    payload
+                    payload,
+                    traceCarrier: (data as any)._traceCarrier
                 }).save({session : mongoSession}) ;
             })
         } catch (err) {
@@ -42,9 +43,10 @@ export default class RaceCreatedSagaListener  extends Listener<RaceStartedEvent>
             // nothing will be saved and the service will now that the operation
             // didnt continue when the saving failed
             // with status false the service knows that if failed
-            new RaceCreatedResultSagaPublisher(this.client).publish({
+                await new RaceCreatedResultSagaPublisher(this.client).publish({
                 raceId : data.race.raceId ,
-                status : false
+                status : false,
+                _traceCarrier: (data as any)._traceCarrier
             })
 
         } finally {

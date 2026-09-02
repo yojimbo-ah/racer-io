@@ -5,7 +5,7 @@ import { Subjects , CheaterDetectedEvent , PositionUpdatedArchiveEvent , RaceAwa
     UserCreatedResultRacesArchiveEvent
 } from "@racer-io/common";
 import { natsWrapper } from "../nats-wrapper";
-import { SpanStatusCode } from "@opentelemetry/api";
+import { SpanStatusCode, context, propagation } from "@opentelemetry/api";
 import { tracer } from "../utils/tracer";
 // as you can see not all routes and listeners need to modify the data inside the databse
 // so some publishers will still be published directly , no need for the outbox pattren here
@@ -43,7 +43,8 @@ export async function startOutboxRelay() {
 }
 
 export async function publishAndMark(doc: OutboxEventDocument) {
-    tracer.startActiveSpan('outbox.publishAndMark' , async (span) => {
+    const parentCtx = propagation.extract(context.active(), doc.traceCarrier ?? {});
+    return context.with(parentCtx, () => tracer.startActiveSpan('outbox.publishAndMark' , async (span) => {
         try {
             // check the event type then we publish depending on the event
             span.setAttribute('outbox.event_type' , doc.eventType) ;
@@ -53,37 +54,37 @@ export async function publishAndMark(doc: OutboxEventDocument) {
             // will add the subjects later
             if (doc.eventType === Subjects.CheaterDetected) {
                 const payload  = doc.payload as  CheaterDetectedEvent['data'] ;
-                new CheaterDetectedPublisher(natsWrapper.client).publish(payload) ;
+                await new CheaterDetectedPublisher(natsWrapper.client).publish(payload) ;
             }
 
             if (doc.eventType === Subjects.PositionUpdatedArchive) {
                 const payload = doc.payload as PositionUpdatedArchiveEvent['data'] ;
-                new PositionUpdatedAchivePublisher(natsWrapper.client).publish(payload) ;
+                await new PositionUpdatedAchivePublisher(natsWrapper.client).publish(payload) ;
             }
 
             if (doc.eventType === Subjects.RaceAwaitng) {
                 const payload = doc.payload as RaceAwaitingEvent['data'] ;
-                new RaceAwaitingPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceAwaitingPublisher(natsWrapper.client).publish(payload) ;
             }
 
             if (doc.eventType === Subjects.RaceCancelled) {
                 const payload = doc.payload as RaceCancelledEvent['data'] ;
-                new RaceCancelledPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCancelledPublisher(natsWrapper.client).publish(payload) ;
             }
 
             if (doc.eventType === Subjects.RaceFinished) {
                 const payload = doc.payload as RaceFinishedEvent['data'] ;
-                new RaceFinishedPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceFinishedPublisher(natsWrapper.client).publish(payload) ;
             }
 
             if  (doc.eventType === Subjects.RaceStarted) {
                 const payload = doc.payload as RaceStartedEvent['data'] ;
-                new RaceStartedPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceStartedPublisher(natsWrapper.client).publish(payload) ;
             }
 
             if (doc.eventType === SubjectsUserCreationSaga.UserCreatedResultRacesArchive) {
                 const payload = doc.payload as UserCreatedResultRacesArchiveEvent['data'] ;
-                new UserCreatedResultRacesArchivePublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreatedResultRacesArchivePublisher(natsWrapper.client).publish(payload) ;
             }
 
             doc.published = true;
@@ -98,6 +99,6 @@ export async function publishAndMark(doc: OutboxEventDocument) {
         } finally {
             span.end() ;
         }
-    })
+    }))
 
 }

@@ -43,12 +43,13 @@ export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
             // may augment the checl later
             if (raceId) {
                 // user already logged in before and he is in race
-                new PositionUpdatedAchivePublisher(this.client).publish({
+                    await new PositionUpdatedAchivePublisher(this.client).publish({
                     latitude : data.latitude ,
                     longitude : data.longitude ,
                     timestamp : data.timestamp ,
                     userId : data.userId ,
-                    raceId : raceId 
+                    raceId : raceId,
+                    _traceCarrier: (data as any)._traceCarrier
                 })                
             }
 
@@ -63,12 +64,13 @@ export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
 
         }
         // the case where the user is not in race or the user just logged in the application 
-        new PositionUpdatedAchivePublisher(this.client).publish({
+            await new PositionUpdatedAchivePublisher(this.client).publish({
             latitude : data.latitude ,
             longitude : data.longitude ,
             timestamp : data.timestamp ,
             userId : data.userId ,
-            raceId : ''
+            raceId : '',
+            _traceCarrier: (data as any)._traceCarrier
         }) ;
 
         await redis.expire(data.userId , TIME_BEFORE_DELETE) ;

@@ -29,12 +29,13 @@ export default class UserCreatedSagaListener extends Listener<userCreatedEvent> 
                 } ;
                 await OutboxEvent.build({
                     eventType : SubjectsUserCreationSaga.UserCreatedSaga ,
-                    payload
+                    payload,
+                    traceCarrier: (data as any)._traceCarrier
                 }).save({session : mongoSession}) ;
             })
         } catch (err) {
             // send back the request to the service to tell her it didnt reach the other services
-            new UserCreatedResultSagaPublisher(this.client).publish({
+                await new UserCreatedResultSagaPublisher(this.client).publish({
                 sagaId : String(userSaga._id) ,
                 status : false ,
                 userId : data.userId

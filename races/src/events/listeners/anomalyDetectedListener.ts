@@ -54,7 +54,8 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
 
                     await OutboxEvent.build({
                         eventType : Subjects.CheaterDetected ,
-                        payload
+                        payload,
+                        traceCarrier: (data as any)._traceCarrier
                     }).save() ;
                 })
             } catch (err) {
@@ -131,7 +132,8 @@ export class AnomalyDetectedListener extends Listener<AnomalyDetectedEvent>{
                         }
                         await OutboxEvent.build({
                             eventType : Subjects.RaceCancelled ,
-                            payload
+                            payload,
+                            traceCarrier: (data as any)._traceCarrier
                         }).save() ;
                     })
                 } finally {

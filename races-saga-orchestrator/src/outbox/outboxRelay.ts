@@ -8,7 +8,7 @@ import { Subjects , SubjectsUserCreationSaga , SubjectRaceSage ,
     RaceCreatedSagaResultEvent
 } from "@racer-io/common";
 import { natsWrapper } from "../nats-wrapper";
-import { SpanStatusCode } from "@opentelemetry/api";
+import { SpanStatusCode, context, propagation } from "@opentelemetry/api";
 import { tracer } from "../utils/tracer";
 
 // user-saga
@@ -54,7 +54,8 @@ export async function startOutboxRelay() {
 }
 
 export async function publishAndMark(doc: OutboxEventDocument) {
-    tracer.startActiveSpan('outbox.publishAndMard' , async (span) => {
+    const parentCtx = propagation.extract(context.active(), doc.traceCarrier ?? {});
+    return context.with(parentCtx, () => tracer.startActiveSpan('outbox.publishAndMard' , async (span) => {
         try {
             span.setAttribute('outbox.event_type' , doc.eventType) ;
             span.setAttribute('outbox.event_id' , String(doc._id)) ;
@@ -65,41 +66,41 @@ export async function publishAndMark(doc: OutboxEventDocument) {
             // user-created-saga publishers
             if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSagaResult) {
                 const payload = doc.payload as UserCreatedSagaResultEvent['data'] ;
-                new UserCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
             }
             if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSaga) {
                 const payload = doc.payload as UserCreatedSagaEvent['data'] ;
-                new UserCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
             }
             if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledArchive) {
                 const payload = doc.payload as UserCreationCancelledArchiveEvent['data'] ;
-                new UserCreationCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreationCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
             }
             if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledRaces) {
                 const payload = doc.payload as UserCreationCancelledRacesEvent['data'] ;
-                new UserCreationCancelledRacesPublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreationCancelledRacesPublisher(natsWrapper.client).publish(payload) ;
             }
 
             // race-created-saga  publishers
             if (doc.eventType === SubjectRaceSage.raceCancelledArchive) {
                 const payload = doc.payload as RaceCancelledArchiveEvent['data'] ;
-                new RaceCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
             }
             if (doc.eventType === SubjectRaceSage.raceCancelledPositions) {
                 const payload = doc.payload as RaceCancelledPositionsEvent['data'] ;
-                new RaceCancelledPositionsPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCancelledPositionsPublisher(natsWrapper.client).publish(payload) ;
             }
             if (doc.eventType === SubjectRaceSage.raceCreatedCancelledSocketGateway) {
                 const payload = doc.payload as RaceCreatedCancelledSocketGateway['data'] ;
-                new RaceCancelledSocketgatewayPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCancelledSocketgatewayPublisher(natsWrapper.client).publish(payload) ;
             }
             if (doc.eventType === SubjectRaceSage.raceCreatedSagaResult) {
                 const payload = doc.payload as RaceCreatedSagaResultEvent['data'] ;
-                new RaceCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
             }
             if (doc.eventType === SubjectRaceSage.raceCreatedsaga) {
                 const payload = doc.payload as RaceCreatedSagaEvent['data'] ;
-                new RaceCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
             }
 
             doc.published = true;
@@ -114,6 +115,6 @@ export async function publishAndMark(doc: OutboxEventDocument) {
         } finally {
             span.end() ;
         }
-    })
+    }))
 
 }

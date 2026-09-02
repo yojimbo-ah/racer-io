@@ -31,16 +31,18 @@ export class UserCreatedListener extends Listener<UserCreatedSagaEvent>{
                     }
                     await OutboxEvent.build({
                         eventType : SubjectsUserCreationSaga.UserCreatedResultRacesArchive ,
-                        payload
+                        payload,
+                        traceCarrier: (data as any)._traceCarrier
                     }).save({session : mongoSession}) ;
                 })
             } catch (err) {
                 // in case of faulire we publish the failure event
-                new UserCreatedResultRacesArchivePublisher(this.client).publish({
+                await new UserCreatedResultRacesArchivePublisher(this.client).publish({
                     sagaId : data.sagaId ,
                     service : Services.archive ,
                     status : false ,
-                    userId : data.payload.userId
+                    userId : data.payload.userId,
+                    _traceCarrier: (data as any)._traceCarrier
                 })
             } finally {
                 await mongoSession.endSession() ;
@@ -48,11 +50,12 @@ export class UserCreatedListener extends Listener<UserCreatedSagaEvent>{
 
         } catch (err) {
             // case of failure
-            new UserCreatedResultRacesArchivePublisher(this.client).publish({
+            await new UserCreatedResultRacesArchivePublisher(this.client).publish({
                 sagaId : data.sagaId ,
                 service : Services.archive ,
                 status : false ,
-                userId : data.payload.userId
+                userId : data.payload.userId,
+                _traceCarrier: (data as any)._traceCarrier
             })
         } finally {
             msg.ack() ;

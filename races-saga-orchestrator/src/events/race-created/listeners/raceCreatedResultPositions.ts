@@ -50,7 +50,8 @@ export default class RaceCreatedResultPositionsListener extends Listener <RaceCr
                         }
                         await OutboxEvent.build({
                             eventType : SubjectRaceSage.raceCreatedSagaResult ,
-                            payload
+                            payload,
+                            traceCarrier: (data as any)._traceCarrier
                         }).save({session : mongoSession}) ;
 
                     } else if (raceSaga.respondedServices.length === Steps.length) {

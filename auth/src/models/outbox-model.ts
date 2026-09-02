@@ -1,5 +1,6 @@
 import mongoose, { Model, Document } from "mongoose";
 import { SubjectRaceSage , Subjects , SubjectsUserCreationSaga , AllSubjectValues , AllSubjects} from "@racer-io/common";
+import { context, propagation } from "@opentelemetry/api";
 
 interface OutboxEventAttrs {
     eventType: SubjectRaceSage | Subjects | SubjectsUserCreationSaga,
@@ -65,7 +66,13 @@ outboxEventSchema.index({ published: 1, createdAt: 1 });
 outboxEventSchema.index({ publishedAt: 1 }, { expireAfterSeconds: 3600 });
 
 outboxEventSchema.statics.build = (attrs: OutboxEventAttrs) => {
-    return new OutboxEvent(attrs);
+    const traceCarrier = attrs.traceCarrier ?? attrs.payload._traceCarrier ?? {};
+    propagation.inject(context.active(), traceCarrier);
+
+    return new OutboxEvent({
+        ...attrs,
+        traceCarrier
+    });
 }
 
 const OutboxEvent = mongoose.model<OutboxEventDocument, OutboxEventModel>('OutboxEvent', outboxEventSchema);

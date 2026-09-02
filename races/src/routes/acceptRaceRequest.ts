@@ -61,7 +61,8 @@ router.post('/api/races/accept-race' ,
                         }
                         await OutboxEvent.build({
                             eventType : Subjects.RaceStarted ,
-                            payload
+                            payload,
+                            traceCarrier: (req as any)._traceCarrier
                         }).save({session : mongoSession}) ;
                     })
                 } finally {
@@ -113,7 +114,8 @@ router.post('/api/races/accept-race' ,
                         }
                         await OutboxEvent.build({
                             eventType : Subjects.RaceCancelled ,
-                            payload
+                            payload,
+                            traceCarrier: (req as any)._traceCarrier
                         }).save({session : mongoSession}) ;
                     })
                 } finally {
