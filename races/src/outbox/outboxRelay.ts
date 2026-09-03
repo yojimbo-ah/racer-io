@@ -44,6 +44,7 @@ export async function startOutboxRelay() {
 
 export async function publishAndMark(doc: OutboxEventDocument) {
     const parentCtx = propagation.extract(context.active(), doc.traceCarrier ?? {});
+    const carrier = (doc.traceCarrier ?? {}) as Record<string, string>;
     return context.with(parentCtx, () => tracer.startActiveSpan('outbox.publishAndMark' , async (span) => {
         try {
             // check the event type then we publish depending on the event
@@ -54,37 +55,37 @@ export async function publishAndMark(doc: OutboxEventDocument) {
             // will add the subjects later
             if (doc.eventType === Subjects.CheaterDetected) {
                 const payload  = doc.payload as  CheaterDetectedEvent['data'] ;
-                await new CheaterDetectedPublisher(natsWrapper.client).publish(payload) ;
+                await new CheaterDetectedPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
 
             if (doc.eventType === Subjects.PositionUpdatedArchive) {
                 const payload = doc.payload as PositionUpdatedArchiveEvent['data'] ;
-                await new PositionUpdatedAchivePublisher(natsWrapper.client).publish(payload) ;
+                await new PositionUpdatedAchivePublisher(natsWrapper.client).publish(payload, carrier) ;
             }
 
             if (doc.eventType === Subjects.RaceAwaitng) {
                 const payload = doc.payload as RaceAwaitingEvent['data'] ;
-                await new RaceAwaitingPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceAwaitingPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
 
             if (doc.eventType === Subjects.RaceCancelled) {
                 const payload = doc.payload as RaceCancelledEvent['data'] ;
-                await new RaceCancelledPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCancelledPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
 
             if (doc.eventType === Subjects.RaceFinished) {
                 const payload = doc.payload as RaceFinishedEvent['data'] ;
-                await new RaceFinishedPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceFinishedPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
 
             if  (doc.eventType === Subjects.RaceStarted) {
                 const payload = doc.payload as RaceStartedEvent['data'] ;
-                await new RaceStartedPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceStartedPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
 
             if (doc.eventType === SubjectsUserCreationSaga.UserCreatedResultRacesArchive) {
                 const payload = doc.payload as UserCreatedResultRacesArchiveEvent['data'] ;
-                await new UserCreatedResultRacesArchivePublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreatedResultRacesArchivePublisher(natsWrapper.client).publish(payload, carrier) ;
             }
 
             doc.published = true;

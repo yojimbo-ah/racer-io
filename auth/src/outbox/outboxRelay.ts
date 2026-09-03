@@ -32,7 +32,7 @@ export async function startOutboxRelay() {
 export async function publishAndMark(doc: OutboxEventDocument) {
     // extract the carrier and the parrent context so we can
     // continue the tracking across services 
-    const carrier = (doc as any).traceCarrier ?? {};
+    const carrier = ((doc as any).traceCarrier ?? {}) as Record<string, string>;
     console.log('[Auth Relay Carrier]:', JSON.stringify(doc.traceCarrier, null, 2));
     console.log('[Publisher Injected Carrier]:', JSON.stringify(carrier, null, 2));
     const parentCtx = propagation.extract(context.active(), carrier);
@@ -48,11 +48,11 @@ export async function publishAndMark(doc: OutboxEventDocument) {
                 // 3. AWAIT the publisher calls so context remains active during publish
                 if (doc.eventType === Subjects.userCreated) {
                     const payload = doc.payload as userCreatedEvent['data'];
-                    await new UserCreatedPublisher(natsWrapper.client).publish(payload);
+                    await new UserCreatedPublisher(natsWrapper.client).publish(payload, carrier);
                 }
                 if (doc.eventType === Subjects.userUpdated) {
                     const payload = doc.payload as userUpdatedEvent['data'];
-                    await new UserUpdatedPublisher(natsWrapper.client).publish(payload);
+                    await new UserUpdatedPublisher(natsWrapper.client).publish(payload, carrier);
                 }
 
                 doc.published = true;

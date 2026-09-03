@@ -57,7 +57,7 @@ router.post('/api/races/new' ,
         }
         const result2String = await redis.hgetall(friendId)  as UserDataString ;
         const result2  : UserData = {
-            ...result1String ,
+            ...result2String ,
             latitude : Number(result2String.latitude) ,
             longitude : Number(result2String.longitude)
         }

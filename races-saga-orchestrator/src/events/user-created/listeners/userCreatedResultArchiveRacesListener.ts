@@ -84,9 +84,8 @@ export default class UserCreatedResultRacesArchiveListener extends Listener<User
                 await new UserCreatedResultSagaPublisher(this.client).publish({
                     sagaId : String(userSaga._id) ,
                     status : false ,
-                    userId : data.userId,
-                    _traceCarrier: (data as any)._traceCarrier
-                })
+                    userId : data.userId
+                }, (data as any)._traceCarrier)
             } finally {
                 await mongoSession.endSession() ;
                 msg.ack() ;

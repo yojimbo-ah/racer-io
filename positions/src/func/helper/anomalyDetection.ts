@@ -15,7 +15,7 @@ export const anomalyDetection = async (userId : string , timestamp: string) : Pr
     }
     const mean_speeds = mean_speed_interval.map(r => JSON.parse(r) as PositionStamp) ;
     let speed = 0 ;
-    for (let i = 0 ; i++ ; i < mean_speeds.length - 1) {
+    for (let i = 0 ; i < mean_speeds.length - 1 ; i++) {
         const avgSpeed = calculateSpeed(mean_speeds[i+1] , mean_speeds[i]) ;
         speed += avgSpeed ;
     }
@@ -26,7 +26,7 @@ export const anomalyDetection = async (userId : string , timestamp: string) : Pr
         return ;
     }
 
-    new AnomalyDetectedPublisher(natsWrapper.client).publish({
+    await new AnomalyDetectedPublisher(natsWrapper.client).publish({
         timestamp : timestamp ,
         userId : userId ,
         reason : 'speed of the user is not quite right currently'

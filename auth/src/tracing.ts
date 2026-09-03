@@ -6,12 +6,6 @@ import { resourceFromAttributes } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
-import { propagation } from '@opentelemetry/api';
-import { W3CTraceContextPropagator } from '@opentelemetry/core';
-
-// Register global propagator so traceparent headers are generated
-propagation.setGlobalPropagator(new W3CTraceContextPropagator());
-
 const normalizeCollectorUrl = () => {
   const rawUrl =
     process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||

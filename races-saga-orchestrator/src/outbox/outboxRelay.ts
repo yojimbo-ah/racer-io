@@ -55,6 +55,7 @@ export async function startOutboxRelay() {
 
 export async function publishAndMark(doc: OutboxEventDocument) {
     const parentCtx = propagation.extract(context.active(), doc.traceCarrier ?? {});
+    const carrier = (doc.traceCarrier ?? {}) as Record<string, string>;
     return context.with(parentCtx, () => tracer.startActiveSpan('outbox.publishAndMard' , async (span) => {
         try {
             span.setAttribute('outbox.event_type' , doc.eventType) ;
@@ -66,41 +67,41 @@ export async function publishAndMark(doc: OutboxEventDocument) {
             // user-created-saga publishers
             if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSagaResult) {
                 const payload = doc.payload as UserCreatedSagaResultEvent['data'] ;
-                await new UserCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreatedResultSagaPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
             if (doc.eventType === SubjectsUserCreationSaga.UserCreatedSaga) {
                 const payload = doc.payload as UserCreatedSagaEvent['data'] ;
-                await new UserCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreatedSagaPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
             if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledArchive) {
                 const payload = doc.payload as UserCreationCancelledArchiveEvent['data'] ;
-                await new UserCreationCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreationCancelledArchivePublisher(natsWrapper.client).publish(payload, carrier) ;
             }
             if (doc.eventType === SubjectsUserCreationSaga.UserCreationCancelledRaces) {
                 const payload = doc.payload as UserCreationCancelledRacesEvent['data'] ;
-                await new UserCreationCancelledRacesPublisher(natsWrapper.client).publish(payload) ;
+                await new UserCreationCancelledRacesPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
 
             // race-created-saga  publishers
             if (doc.eventType === SubjectRaceSage.raceCancelledArchive) {
                 const payload = doc.payload as RaceCancelledArchiveEvent['data'] ;
-                await new RaceCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCancelledArchivePublisher(natsWrapper.client).publish(payload, carrier) ;
             }
             if (doc.eventType === SubjectRaceSage.raceCancelledPositions) {
                 const payload = doc.payload as RaceCancelledPositionsEvent['data'] ;
-                await new RaceCancelledPositionsPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCancelledPositionsPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
             if (doc.eventType === SubjectRaceSage.raceCreatedCancelledSocketGateway) {
                 const payload = doc.payload as RaceCreatedCancelledSocketGateway['data'] ;
-                await new RaceCancelledSocketgatewayPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCancelledSocketgatewayPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
             if (doc.eventType === SubjectRaceSage.raceCreatedSagaResult) {
                 const payload = doc.payload as RaceCreatedSagaResultEvent['data'] ;
-                await new RaceCreatedResultSagaPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCreatedResultSagaPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
             if (doc.eventType === SubjectRaceSage.raceCreatedsaga) {
                 const payload = doc.payload as RaceCreatedSagaEvent['data'] ;
-                await new RaceCreatedSagaPublisher(natsWrapper.client).publish(payload) ;
+                await new RaceCreatedSagaPublisher(natsWrapper.client).publish(payload, carrier) ;
             }
 
             doc.published = true;

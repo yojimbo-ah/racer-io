@@ -25,7 +25,7 @@ export class UserCreatedListener extends Listener<UserCreatedSagaEvent>{
                     await user.save({session : mongoSession}) ;
                     const payload : UserCreatedResultRacesArchiveEvent['data'] = {
                         sagaId : data.sagaId ,
-                        service : Services.archive , 
+                        service : Services.races ,
                         status : true ,
                         userId : data.payload.userId
                     }
@@ -39,11 +39,10 @@ export class UserCreatedListener extends Listener<UserCreatedSagaEvent>{
                 // in case of faulire we publish the failure event
                 await new UserCreatedResultRacesArchivePublisher(this.client).publish({
                     sagaId : data.sagaId ,
-                    service : Services.archive ,
+                    service : Services.races ,
                     status : false ,
-                    userId : data.payload.userId,
-                    _traceCarrier: (data as any)._traceCarrier
-                })
+                    userId : data.payload.userId
+                }, (data as any)._traceCarrier)
             } finally {
                 await mongoSession.endSession() ;
             }
@@ -52,11 +51,10 @@ export class UserCreatedListener extends Listener<UserCreatedSagaEvent>{
             // case of failure
             await new UserCreatedResultRacesArchivePublisher(this.client).publish({
                 sagaId : data.sagaId ,
-                service : Services.archive ,
+                service : Services.races ,
                 status : false ,
-                userId : data.payload.userId,
-                _traceCarrier: (data as any)._traceCarrier
-            })
+                userId : data.payload.userId
+            }, (data as any)._traceCarrier)
         } finally {
             msg.ack() ;
         }

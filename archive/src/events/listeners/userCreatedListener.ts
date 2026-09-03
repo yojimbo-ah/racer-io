@@ -16,7 +16,7 @@ export default class UserCreatedListener extends Listener <UserCreatedSagaEvent>
             })
             await user.save() ;
             // case of success
-            new UserCreatedResultRacesArchivePublisher(this.client).publish({
+            await new UserCreatedResultRacesArchivePublisher(this.client).publish({
                 sagaId : data.sagaId ,
                 service : Services.archive , 
                 status : true ,
@@ -25,7 +25,7 @@ export default class UserCreatedListener extends Listener <UserCreatedSagaEvent>
 
         } catch (err) {
             // case of failure
-            new UserCreatedResultRacesArchivePublisher(this.client).publish({
+            await new UserCreatedResultRacesArchivePublisher(this.client).publish({
                 sagaId : data.sagaId ,
                 service : Services.archive ,
                 status : false ,

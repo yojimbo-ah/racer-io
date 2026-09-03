@@ -35,7 +35,7 @@ const raceEngine = async (checking : boolean) : Promise<void> => {
                         // user1 won
                         raceRecord.winner = race.user1 ;
                         await raceRecord.save() ;
-                        new RaceFinishedPublisher(natsWrapper.client).publish({
+                        await new RaceFinishedPublisher(natsWrapper.client).publish({
                             race : {
                                 endPosition : race.endingPos ,
                                 startPos : race.endingPos ,
@@ -52,7 +52,7 @@ const raceEngine = async (checking : boolean) : Promise<void> => {
                         // user2 won
                         raceRecord.winner = race.user2 ;
                         await raceRecord.save() ;
-                        new RaceFinishedPublisher(natsWrapper.client).publish({
+                        await new RaceFinishedPublisher(natsWrapper.client).publish({
                             race : {
                                 endPosition : race.endingPos ,
                                 startPos : race.endingPos ,

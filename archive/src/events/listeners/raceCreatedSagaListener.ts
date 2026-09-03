@@ -22,14 +22,14 @@ export default class RaceCreatedSagaListener extends Listener<RaceCreatedSagaEve
             const res = await race.save() ;
             console.log(res) ;
             // send the event with seccess message
-            new RaceCreatedResultPositionsArchivePublisher(this.client).publish({
+            await new RaceCreatedResultPositionsArchivePublisher(this.client).publish({
                 raceId : data.payload.race.raceId ,
                 sagaId : data.sagaId ,
                 service : Services.archive ,
                 status : true
             })
         } catch (err) {
-            new RaceCreatedResultPositionsArchivePublisher(this.client).publish({
+            await new RaceCreatedResultPositionsArchivePublisher(this.client).publish({
                 raceId : data.payload.race.raceId ,
                 sagaId : data.sagaId ,
                 service : Services.archive ,

@@ -10,6 +10,7 @@ import { RaceAwaitingListener } from "./events/listeners/raceAwaitingListener";
 import { RaceCancelledListener } from "./events/listeners/raceCancelledListener";
 import { RaceFinishedListener } from "./events/listeners/raceFinishedListener";
 import { RaceStartedListener } from "./events/listeners/raceStartedListener";
+import RaceCreatedCancelledSocketGatewayListener from "./events/listeners/raceCreatedCancelledSocketGatewayListener";
 
 
 const connect = async () => {
@@ -64,6 +65,7 @@ const connect = async () => {
         new RaceCancelledListener(natsWrapper.client).listen() ;
         new RaceStartedListener(natsWrapper.client).listen() ;
         new RaceFinishedListener(natsWrapper.client).listen() ;
+        new RaceCreatedCancelledSocketGatewayListener(natsWrapper.client).listen() ;
 
         const server = http.createServer(app) ;
         initSocket(server) ;

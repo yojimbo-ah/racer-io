@@ -39,7 +39,7 @@ export class PositionUpdatedSocketListener extends Listener<PositionUpdatedSocke
             }) ;
             await pipeline.exec() ;
 
-            new PositionUpdatedPublisher(this.client).publish(data) ;
+            await new PositionUpdatedPublisher(this.client).publish(data) ;
 
             } catch (err) {
                 console.log('updating position failed becauese of the current coardinates system we used')

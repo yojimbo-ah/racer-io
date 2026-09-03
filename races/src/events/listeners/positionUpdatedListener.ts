@@ -49,8 +49,7 @@ export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
                     timestamp : data.timestamp ,
                     userId : data.userId ,
                     raceId : raceId,
-                    _traceCarrier: (data as any)._traceCarrier
-                })                
+                }, (data as any)._traceCarrier)
             }
 
         } else {
@@ -70,8 +69,7 @@ export class PositionUpdatedListener extends Listener<PositionUpdatedEvent>{
             timestamp : data.timestamp ,
             userId : data.userId ,
             raceId : '',
-            _traceCarrier: (data as any)._traceCarrier
-        }) ;
+        }, (data as any)._traceCarrier) ;
 
         await redis.expire(data.userId , TIME_BEFORE_DELETE) ;
         console.log(" got event at :" + data.timestamp) ;

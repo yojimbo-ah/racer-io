@@ -46,8 +46,7 @@ export default class RaceCreatedSagaListener  extends Listener<RaceStartedEvent>
                 await new RaceCreatedResultSagaPublisher(this.client).publish({
                 raceId : data.race.raceId ,
                 status : false,
-                _traceCarrier: (data as any)._traceCarrier
-            })
+            }, (data as any)._traceCarrier)
 
         } finally {
             // delete the session and ack the message in both cases

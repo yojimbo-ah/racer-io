@@ -30,7 +30,7 @@ export default class RaceCreatedSagaListener extends Listener<RaceCreatedSagaEve
             new RaceCreatedResultPositionsArchivePublisher(this.client).publish({
                 raceId : data.payload.race.raceId ,
                 sagaId : data.sagaId ,
-                service : Services.archive ,
+                service : Services.positions ,
                 status : true
             })
             msg.ack() ;
@@ -39,7 +39,7 @@ export default class RaceCreatedSagaListener extends Listener<RaceCreatedSagaEve
             new RaceCreatedResultPositionsArchivePublisher(this.client).publish({
                 raceId : data.payload.race.raceId ,
                 sagaId : data.sagaId ,
-                service : Services.archive ,
+                service : Services.positions ,
                 status : false
             })
             

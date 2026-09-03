@@ -57,7 +57,7 @@ export const positionUpdatedSocket = async (payload : PositionEventPayload , use
     await pipeline.exec() ;
 
 
-    new PositionUpdatedPublisher(natsWrapper.client).publish({
+    await new PositionUpdatedPublisher(natsWrapper.client).publish({
         longitude : payload.x ,
         latitude : payload.y ,
         timestamp : payload.timestamp ,

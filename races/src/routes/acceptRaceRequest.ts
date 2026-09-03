@@ -46,7 +46,7 @@ router.post('/api/races/accept-race' ,
                 const mongoSession = await mongoose.startSession() ;
                 try {
                     await mongoSession.withTransaction(async () => {
-                        race.save({session : mongoSession}) ;
+                        await race.save({session : mongoSession}) ;
                         const payload : RaceStartedEvent['data'] = {
                             race : {
                                 endPosition : race.endingPos ,
@@ -69,7 +69,6 @@ router.post('/api/races/accept-race' ,
                     await mongoSession.endSession() ;
                 }
 
-                await race.save() ;
                 const pipeline = redis.pipeline() ;
                 // create a new race in reddis database under race:started:raceId
                 pipeline.set(`race:started:${race._id.toString()}` , JSON.stringify({

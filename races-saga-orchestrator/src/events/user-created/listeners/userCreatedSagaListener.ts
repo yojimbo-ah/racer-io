@@ -39,7 +39,7 @@ export default class UserCreatedSagaListener extends Listener<userCreatedEvent> 
                 sagaId : String(userSaga._id) ,
                 status : false ,
                 userId : data.userId
-            })
+            }, (data as any)._traceCarrier)
         } finally {
             await mongoSession.endSession() ;
             msg.ack() ;
