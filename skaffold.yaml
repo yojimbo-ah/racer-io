@@ -57,14 +57,6 @@ build:
         manual:
           - src: 'src/**/*.ts'
             dest: .
-    - image: ahmed0ahmed/racer-predictions
-      context: predictions
-      docker:
-        dockerfile: Dockerfile
-      sync:
-        manual:
-          - src: 'src/**/*.py'
-            dest: .
     - image: ahmed0ahmed/racer-socket-gateway
       context: socket-gateway
       docker:

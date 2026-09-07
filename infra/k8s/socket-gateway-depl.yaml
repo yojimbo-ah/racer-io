@@ -16,7 +16,7 @@ spec:
       containers:
         - name: socket-gateway
           image: ahmed0ahmed/racer-socket-gateway
-          imagePullPolicy : Never
+          imagePullPolicy : IfNotPresent
           env: 
             - name: NATS_CLUSTER_ID
               value: 'racer.io'

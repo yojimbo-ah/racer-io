@@ -16,7 +16,7 @@ spec:
       containers:
         - name: client
           image: ahmed0ahmed/racer-client
-          imagePullPolicy : Never
+          imagePullPolicy : IfNotPresent
 ---
 #kubernets service cluesterip so we can acess the pod
 #default service is clusterip service that why we didint have to

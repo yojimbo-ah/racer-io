@@ -16,7 +16,7 @@ spec:
       containers:
         - name: races-saga-orchestrator
           image: ahmed0ahmed/racer-races-saga-orchestrator
-          imagePullPolicy : Never
+          imagePullPolicy : IfNotPresent
           env: 
             - name: NATS_CLUSTER_ID
               value: 'racer.io'

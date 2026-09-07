@@ -16,7 +16,7 @@ spec:
       containers:
         - name: predictions
           image: ahmed0ahmed/racer-predictions
-          imagePullPolicy : Never
+          imagePullPolicy : IfNotPresent
           env: 
             - name: NATS_CLUSTER_ID
               value: 'racer.io'

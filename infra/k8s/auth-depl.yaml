@@ -16,7 +16,7 @@ spec:
       containers:
         - name: auth
           image: ahmed0ahmed/racer-auth
-          imagePullPolicy : Never
+          imagePullPolicy : IfNotPresent
           env: 
             - name: NATS_CLUSTER_ID
               value: 'racer.io'

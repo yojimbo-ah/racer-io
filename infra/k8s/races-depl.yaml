@@ -16,7 +16,7 @@ spec:
       containers:
         - name: races
           image: ahmed0ahmed/racer-races
-          imagePullPolicy : Never
+          imagePullPolicy : IfNotPresent
           env:
             - name: MONGO_URI
               value: 'mongodb://races-mongo-srv:27017/races'
