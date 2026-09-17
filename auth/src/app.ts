@@ -9,7 +9,7 @@ import { readyzRouter } from "./routes/readyz";
 import { refershRouter } from "./routes/refresh";
 import { logoutAllRouter } from "./routes/logoutAll";
 import { logoutRouter } from "./routes/logout";
-import { errorHandler , NotFoundError } from "@racer-io/common" ;
+import { errorHandler , NotFoundError, IdempotencyClient } from "@racer-io/common" ;
 
 
 const app = express() ;
@@ -17,6 +17,10 @@ const app = express() ;
 app.set('trust proxy' , true) ;
 app.use(express.json()) ;
 app.use(cookieParser()) ;
+app.use(new IdempotencyClient(
+    process.env.REDIS_HOST_IDEMPOTENCY || process.env.REDIS_HOST_BLACKLIST!,
+    "auth",
+).middleware()) ;
 app.use(currentUserRouter) ;
 app.use(signInRouter) ;
 app.use(signUpRouter) ;

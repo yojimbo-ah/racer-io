@@ -46,6 +46,8 @@ spec:
               value: positions-redis-srv
             - name: REDIS_HOST_BLACKLIST
               value: blacklist-redis-srv
+            - name: REDIS_HOST_IDEMPOTENCY
+              value: positions-redis-srv
 ---
 #kubernets service cluesterip so we can acess the pod
 #default service is clusterip service that why we didint have to

@@ -101,5 +101,4 @@ export async function publishAndMark(doc: OutboxEventDocument) {
             span.end() ;
         }
     }))
-
 }

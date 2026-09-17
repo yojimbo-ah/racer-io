@@ -1,7 +1,7 @@
 import express from "express" ;
 import cookieParser from 'cookie-parser' ;
 import 'express-async-errors';
-import {NotFoundError , errorHandler , currentUser , requireAuth , underSupervision} from "@racer-io/common"
+import {NotFoundError , errorHandler , currentUser , requireAuth , underSupervision, IdempotencyClient} from "@racer-io/common"
 import { newRouter } from "./routes/new";
 import { acceptRaceRequestRouter } from "./routes/acceptRaceRequest";
 import { getRacesRouter } from "./routes/getRaces";
@@ -22,6 +22,10 @@ app.use(currentUser) ;
 app.use(blacklistRedis.requireNotBlacklisted) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;
+app.use(new IdempotencyClient(
+    process.env.REDIS_HOST_IDEMPOTENCY || process.env.REDIS_HOST!,
+    "races",
+).middleware()) ;
 app.use(newRouter) ;
 app.use(acceptRaceRequestRouter) ;
 app.use(getRacesRouter) ;

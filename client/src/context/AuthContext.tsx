@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { createIdempotencyKey, idempotencyHeaders } from '../idempotency'
 export interface User {
   id: string
   email: string
@@ -88,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await fetch(`${getApiUrl()}/api/users/signup`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: idempotencyHeaders(createIdempotencyKey()),
         credentials: 'include',
         body: JSON.stringify({ email, password, userName }),
       })
@@ -112,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await fetch(`${getApiUrl()}/api/users/signin`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: idempotencyHeaders(createIdempotencyKey()),
         credentials: 'include',
         body: JSON.stringify({ email, password }),
       })
@@ -134,9 +135,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null)
     storeTokens({ refreshToken: null, accessToken: null })
     // Attempt server signout to clear cookies
-    void fetch(`${getApiUrl()}/api/users/signout`, {
+    void fetch(`${getApiUrl()}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',
+      headers: idempotencyHeaders(createIdempotencyKey()),
     }).catch(() => {})
   }
 

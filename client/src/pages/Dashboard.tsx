@@ -5,6 +5,7 @@ import { createPositionSocket } from '../socket'
 import { useAuth } from '../context/AuthContext'
 import { RaceMapPicker } from '../components/RaceMapPicker'
 import type { GeoPoint } from '../types'
+import { createIdempotencyKey, idempotencyHeaders } from '../idempotency'
 
 const getServerUrl = () => {
   if (window.location.hostname === 'ticket.com') {
@@ -67,6 +68,8 @@ export const Dashboard = () => {
   const socketRef = useRef<ReturnType<typeof createPositionSocket> | null>(null)
   const prevCoordsRef = useRef<{ lat: number; lng: number } | null>(null)
   const lastPositionEmitAtRef = useRef<number>(0)
+  const raceCreationKeyRef = useRef<string | null>(null)
+  const raceDecisionKeysRef = useRef<Record<string, string>>({})
 
   const loadNearbyUsers = async () => {
     try {
@@ -90,10 +93,13 @@ export const Dashboard = () => {
   }
 
   const sendRaceDecision = async (accept: boolean, raceId: string) => {
+    const decisionKey = `${raceId}:${accept ? 'accept' : 'deny'}`
+    const idempotencyKey = raceDecisionKeysRef.current[decisionKey] ?? createIdempotencyKey()
+    raceDecisionKeysRef.current[decisionKey] = idempotencyKey
     const response = await fetch(`${getApiUrl()}/api/races/accept-race`, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: idempotencyHeaders(idempotencyKey),
       body: JSON.stringify({ raceId, accept }),
     })
 
@@ -118,12 +124,14 @@ export const Dashboard = () => {
 
     setIsSubmittingRace(true)
     setRaceMessage(null)
+    const idempotencyKey = raceCreationKeyRef.current ?? createIdempotencyKey()
+    raceCreationKeyRef.current = idempotencyKey
 
     try {
       const response = await fetch(`${getApiUrl()}/api/races/new`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: idempotencyHeaders(idempotencyKey),
         body: JSON.stringify({
           friendId: selectedOpponent,
           startPos: {
@@ -139,6 +147,7 @@ export const Dashboard = () => {
         throw new Error(error?.message || 'Could not create race')
       }
 
+      raceCreationKeyRef.current = null
       setRaceMessage('Race request sent.')
     } catch (error) {
       setRaceMessage(error instanceof Error ? error.message : 'Could not create race')
