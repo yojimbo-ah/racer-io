@@ -75,7 +75,10 @@ router.post('/api/races/accept-race' ,
                     user1 : race.users[0] ,
                     user2 : race.users[1] ,
                     startingPos : race.startPos ,
-                    endingPos : race.endingPos 
+                    endingPos : race.endingPos ,
+                    // saved so the race engine can publish the race:finished event
+                    // in the same trace as the request that started the race
+                    traceCarrier : (req as any)._traceCarrier ?? {}
                 }) , 'EX' , RACE_STARTED_EXPIRY_TIME) ;
                 
                 // saving the race into the set of active races (so it can be treated later)

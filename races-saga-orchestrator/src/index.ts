@@ -1,4 +1,4 @@
-import sdk from "./tracing";
+import "./tracing";
 import {app} from "./app";
 import { natsWrapper } from "./nats-wrapper";
 import RaceCreatedResultPositionsListener from "./events/race-created/listeners/raceCreatedResultPositions";

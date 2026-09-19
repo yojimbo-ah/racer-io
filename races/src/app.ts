@@ -1,6 +1,7 @@
-import express from "express" ;
+import express , { Request , Response , NextFunction } from "express" ;
 import cookieParser from 'cookie-parser' ;
 import 'express-async-errors';
+import { context , propagation } from "@opentelemetry/api" ;
 import {NotFoundError , errorHandler , currentUser , requireAuth , underSupervision, IdempotencyClient} from "@racer-io/common"
 import { newRouter } from "./routes/new";
 import { acceptRaceRequestRouter } from "./routes/acceptRaceRequest";
@@ -18,6 +19,15 @@ const app = express() ;
 app.set('trust proxy' , true) ;
 app.use(express.json()) ;
 app.use(cookieParser()) ;
+
+// captures the current trace context at the start of the request so the outbox
+// events can carry it and keep the same trace accross the services
+app.use((req : Request, res : Response , next : NextFunction) => {
+    const carrier : Record<string , string> = {} ;
+    propagation.inject(context.active() , carrier) ;
+    (req as any)._traceCarrier = carrier ;
+    next() ;
+}) ;
 app.use(currentUser) ;
 app.use(blacklistRedis.requireNotBlacklisted) ;
 app.use(requireAuth) ;

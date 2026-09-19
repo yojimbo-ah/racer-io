@@ -31,9 +31,11 @@ const sdk = new NodeSDK({
     [ATTR_SERVICE_NAME]: serviceName,
   }),
   traceExporter: new OTLPTraceExporter({ url: `${collectorUrl}/v1/traces` }),
-  metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter({ url: `${collectorUrl}/v1/metrics` }),
-  }),
+  metricReaders: [
+    new PeriodicExportingMetricReader({
+      exporter: new OTLPMetricExporter({ url: `${collectorUrl}/v1/metrics` }),
+    }),
+  ],
   instrumentations: [getNodeAutoInstrumentations()],
 });
 

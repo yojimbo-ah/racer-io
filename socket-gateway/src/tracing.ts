@@ -30,11 +30,13 @@ const sdk = new NodeSDK({
   traceExporter: new OTLPTraceExporter({
     url: `${collectorUrl}/v1/traces`,
   }),
-  metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter({
-      url: `${collectorUrl}/v1/metrics`,
+  metricReaders: [
+    new PeriodicExportingMetricReader({
+      exporter: new OTLPMetricExporter({
+        url: `${collectorUrl}/v1/metrics`,
+      }),
     }),
-  }),
+  ],
   instrumentations: [getNodeAutoInstrumentations()],
 });
 

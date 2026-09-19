@@ -1,4 +1,4 @@
-import sdk from "./tracing";
+import "./tracing";
 import app from "./app";
 import process from "process";
 import { natsWrapper } from "./nats-wrapper";

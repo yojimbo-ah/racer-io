@@ -14,7 +14,8 @@ export type RaceRedis = {
     endingPos : {
         longitude : number ,
         latitude : number
-    }
+    } ,
+    traceCarrier : Record<string , string>
 }
 
 export const getRaces = async () : Promise<string[]>  => {
@@ -40,6 +41,7 @@ export const getRace = async (raceId : string) : Promise<RaceRedis> => {
         user2 : raceRecord.users[1],
         startingPos : raceRecord.startPos,
         endingPos : raceRecord.endingPos,
+        traceCarrier : {}
     }
 
     await redis.set(`race:started:${raceId}`, JSON.stringify(race), 'EX', RACE_STARTED_EXPIRY_TIME) ;
