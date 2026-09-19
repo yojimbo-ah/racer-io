@@ -29,7 +29,7 @@ app.use((req : Request, res : Response , next : NextFunction) => {
     next() ;
 }) ;
 app.use(currentUser) ;
-app.use(blacklistRedis.requireNotBlacklisted) ;
+app.use(blacklistRedis.requireNotBlacklisted()) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;
 app.use(new IdempotencyClient(

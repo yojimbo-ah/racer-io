@@ -15,7 +15,7 @@ app.set('trust proxy' , true) ;
 app.use(express.json()) ;
 app.use(cookieParser()) ;
 app.use(currentUser) ;
-app.use(blacklistRedis.requireNotBlacklisted) ;
+app.use(blacklistRedis.requireNotBlacklisted()) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;
 

@@ -20,7 +20,7 @@ app.use(cookieParser()) ;
 app.use(currentUser) ;
 // this route is to check if the user is black listed (or the account doesnt exist)
 // in case of login or singup failure
-app.use(blacklistRedis.requireNotBlacklisted) ;
+app.use(blacklistRedis.requireNotBlacklisted()) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;
 app.use(getUsersAroundMe) ;
