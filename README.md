@@ -54,6 +54,7 @@ The app is built around live location tracking and race orchestration. A user si
 - `common`: shared events, middleware, enums, and error helpers: https://www.npmjs.com/package/@racer-io/common
 - `predictions`: FastAPI server running a prediction model (multi-layer perceptron) trained on marathon data: https://www.kaggle.com/datasets/aiaiaidavid/the-big-dataset-of-ultra-marathon-running
 - `infra`: Kubernetes manifests and ingress configuration for local or cluster deployment.
+- `otel-lgtm`: the OpenTelemetry observability stack (`grafana/otel-lgtm`) used for cross-service tracing. It provides three pods: the OpenTelemetry Collector (ingests OTLP traces/metrics on 4318/4317), Tempo (trace storage), and Grafana (tracing UI and dashboards) where all the service traces land on one graph.
 
 The services are intentionally split so each one owns its own data and responsibility:
 
@@ -89,6 +90,7 @@ The `infra/k8s` folder wires the runtime pieces together:
 - `socket-gateway-depl.yaml` runs the socket-gateway service, its own Redis instance for rate limiting, and routes socket events to the correct backend service.
 - `race-saga-orchestrator-depl.yaml` runs the race-saga-orchestrator service and its own MongoDB, and syncs the events launched by the races service, making sure every other service involved in the race-start flow is kept in sync (more details on saga orchestration patterns: https://learn.microsoft.com/en-us/azure/architecture/patterns/saga).
 - `nats-depl.yaml` provides the event bus used for inter-service communication.
+- `otel-lgtm-depl.yaml` runs the LGTM observability stack as three OpenTelemetry pods: the OpenTelemetry Collector (OTLP HTTP on 4318, OTLP gRPC on 4317), Tempo (trace storage), and Grafana (UI on 3000, exposed by `otel-lgtm-srv` on 3001). Every instrumented service exports its spans and metrics to the OpenTelemetry Collector over OTLP, the collector forwards them to Tempo, and Grafana visualizes the full trace graph across all services.
 
 Each service owns its own storage. The databases and Redis instances are not shared between services. Some services don't have storage of their own kind: socket-gateway doesn't own a MongoDB, and race-saga-orchestrator doesn't own a Redis instance.
 
@@ -194,6 +196,12 @@ flowchart LR
   SocketGatewayRedis[(Socket Gateway Redis)]
   SagaMongo[(Saga Orchestrator MongoDB)]
 
+  subgraph OTel[OpenTelemetry / LGTM]
+    Collector[OpenTelemetry Collector]
+    Tempo[(Tempo Trace Store)]
+    Grafana[Grafana]
+  end
+
   User[Browser / User] --> Gateway
   Gateway --> Client
   Gateway --> Auth
@@ -226,6 +234,15 @@ flowchart LR
   Common -.shared contracts.-> Races
   Common -.shared contracts.-> SocketGateway
   Common -.shared contracts.-> Saga
+
+  Auth -.OTLP.-> Collector
+  Positions -.OTLP.-> Collector
+  Races -.OTLP.-> Collector
+  Archive -.OTLP.-> Collector
+  SocketGateway -.OTLP.-> Collector
+  Saga -.OTLP.-> Collector
+  Collector --> Tempo
+  Tempo --> Grafana
 ```
 
 ## Request Flow
