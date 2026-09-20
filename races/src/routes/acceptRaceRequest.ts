@@ -6,7 +6,7 @@
 
 import express , { Request , Response , NextFunction } from "express";
 import { body } from "express-validator";
-import { validateRequest , RaceStatus, userStatus, RaceStartedEvent, Subjects, RaceCancelledEvent } from "@racer-io/common";
+import { validateRequest , RaceStatus, userStatus, RaceStartedEvent, Subjects, RaceCancelledEvent, BadRequestError } from "@racer-io/common";
 import redis from "../redis";
 import Race from "../models/race-model";
 import { RACE_STARTED_EXPIRY_TIME, RACE_USER_STATE_EXPIRY_TIME } from "../../consts/expiry-times";
@@ -38,25 +38,39 @@ router.post('/api/races/accept-race' ,
                 throw new Error('Couldnt find the right data') ;
             }
 
+            // only one request is allowed to transition the race out of the
+            // awaiting state, this prevents a second accept/deny racing in
+            if (race.raceStatus !== RaceStatus.RaceAwaiting) {
+                throw new BadRequestError('The race is no longer waiting for a decision') ;
+            }
+
             if (accept) {
                 // start a new race in the database
                 // the use of transaction to make sure both operations 
                 // happen and also the publish will be automatic 
-                race.raceStatus = RaceStatus.RaceStared
                 const mongoSession = await mongoose.startSession() ;
                 try {
-                    await mongoSession.withTransaction(async () => {
-                        await race.save({session : mongoSession}) ;
+                    const startedRace = await mongoSession.withTransaction(async () => {
+                        // atomically claim the transition so concurrent
+                        // accept-race requests only let one of them through
+                        const claimed = await Race.findOneAndUpdate(
+                            { _id : raceId , raceStatus : RaceStatus.RaceAwaiting } ,
+                            { $set : { raceStatus : RaceStatus.RaceStared } } ,
+                            { session : mongoSession , new : true }
+                        ) ;
+                        if (!claimed) {
+                            throw new BadRequestError('The race was already decided') ;
+                        }
                         const payload : RaceStartedEvent['data'] = {
                             race : {
-                                endPosition : race.endingPos ,
-                                startPos : race.startPos ,
-                                raceId : race._id.toString() ,
+                                endPosition : claimed.endingPos ,
+                                startPos : claimed.startPos ,
+                                raceId : claimed._id.toString() ,
                                 raceStatus : RaceStatus.RaceStared
                             } ,
                             userData : {
-                                user1 : race.users[0] ,
-                                user2 : race.users[1]
+                                user1 : claimed.users[0] ,
+                                user2 : claimed.users[1]
                             }
                         }
                         await OutboxEvent.build({
@@ -64,54 +78,62 @@ router.post('/api/races/accept-race' ,
                             payload,
                             traceCarrier: (req as any)._traceCarrier
                         }).save({session : mongoSession}) ;
-                    })
+                        return claimed ;
+                    } , { timeoutMS : 10_000 }) ;
+
+                    const pipeline = redis.pipeline() ;
+                    // create a new race in reddis database under race:started:raceId
+                    pipeline.set(`race:started:${startedRace._id.toString()}` , JSON.stringify({
+                        user1 : startedRace.users[0] ,
+                        user2 : startedRace.users[1] ,
+                        startingPos : startedRace.startPos ,
+                        endingPos : startedRace.endingPos ,
+                        // saved so the race engine can publish the race:finished event
+                        // in the same trace as the request that started the race
+                        traceCarrier : (req as any)._traceCarrier ?? {}
+                    }) , 'EX' , RACE_STARTED_EXPIRY_TIME) ;
+                    
+                    // saving the race into the set of active races (so it can be treated later)
+
+                    // the use of pipeline for intergrity
+                    pipeline.sadd('races:active' , startedRace._id.toString()) ;
+
+                    pipeline.hset(startedRace.users[0] , {userStatus : userStatus.InRace , raceId : startedRace._id.toString()}) ;
+                    pipeline.expire(startedRace.users[0] , RACE_USER_STATE_EXPIRY_TIME) ;
+                    pipeline.hset(startedRace.users[1] , {userStatus : userStatus.InRace , raceId : startedRace._id.toString()}) ;
+                    pipeline.expire(startedRace.users[1] , RACE_USER_STATE_EXPIRY_TIME) ;
+
+                    await pipeline.exec() ;
+                    res.status(200).json({message : "start running" , accepted : true})
                 } finally {
                     await mongoSession.endSession() ;
                 }
-
-                const pipeline = redis.pipeline() ;
-                // create a new race in reddis database under race:started:raceId
-                pipeline.set(`race:started:${race._id.toString()}` , JSON.stringify({
-                    user1 : race.users[0] ,
-                    user2 : race.users[1] ,
-                    startingPos : race.startPos ,
-                    endingPos : race.endingPos ,
-                    // saved so the race engine can publish the race:finished event
-                    // in the same trace as the request that started the race
-                    traceCarrier : (req as any)._traceCarrier ?? {}
-                }) , 'EX' , RACE_STARTED_EXPIRY_TIME) ;
-                
-                // saving the race into the set of active races (so it can be treated later)
-
-                // the use of pipeline for intergrity
-                pipeline.sadd('races:active' , race._id.toString()) ;
-
-                pipeline.hset(race.users[0] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
-                pipeline.expire(race.users[0] , RACE_USER_STATE_EXPIRY_TIME) ;
-                pipeline.hset(race.users[1] , {userStatus : userStatus.InRace , raceId : race._id.toString()}) ;
-                pipeline.expire(race.users[1] , RACE_USER_STATE_EXPIRY_TIME) ;
-
-                await pipeline.exec() ;
-                res.status(200).json({message : "start running" , accepted : true})
             } else {
 
                 // cancell the current race in the database
-                race.raceStatus = RaceStatus.RaceCancelled ;
-
                 const mongoSession = await mongoose.startSession() ;
                 try {
                     await mongoSession.withTransaction(async () => {
-                        await race.save({session : mongoSession}) ;
+                        // atomically claim the transition so only one request
+                        // can cancel the race
+                        const claimed = await Race.findOneAndUpdate(
+                            { _id : raceId , raceStatus : RaceStatus.RaceAwaiting } ,
+                            { $set : { raceStatus : RaceStatus.RaceCancelled } } ,
+                            { session : mongoSession , new : true }
+                        ) ;
+                        if (!claimed) {
+                            throw new BadRequestError('The race was already decided') ;
+                        }
                         const payload : RaceCancelledEvent['data'] = {
                             race : {
-                                endPosition : race.endingPos ,
-                                startPos : race.startPos ,
-                                raceId : race._id.toString() ,
+                                endPosition : claimed.endingPos ,
+                                startPos : claimed.startPos ,
+                                raceId : claimed._id.toString() ,
                                 raceStatus : RaceStatus.RaceCancelled
                             } ,
                             userData : {
-                                user1 : race.users[0] ,
-                                user2 : race.users[1]
+                                user1 : claimed.users[0] ,
+                                user2 : claimed.users[1]
                             }
                         }
                         await OutboxEvent.build({
@@ -119,15 +141,14 @@ router.post('/api/races/accept-race' ,
                             payload,
                             traceCarrier: (req as any)._traceCarrier
                         }).save({session : mongoSession}) ;
-                    })
+                    } , { timeoutMS : 10_000 }) ;
+
+                    res.status(200).json({message : "race cancelled" , accepted : false}) ;
                 } finally {
                     await mongoSession.endSession() ;
                 }
 
-                res.status(200).json({message : "race cancelled" , accepted : false}) ;
             }
-
-            await race.save() ;
 
         }
     }

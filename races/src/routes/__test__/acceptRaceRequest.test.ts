@@ -19,11 +19,11 @@ it("returns 401 when user is not authenticated", async () => {
 });
 
 it("returns 400 for invalid payload", async () => {
-    const token = getAuthToken("user-2");
+    const authCookie = getAuthCookie("user-2");
 
     await request(app)
         .post("/api/races/accept-race")
-        .set("Authorization", `Bearer ${token}`)
+        .set("Cookie", authCookie)
         .send({ raceId: 123, accept: "yes" })
         .expect(400);
 });
@@ -49,11 +49,11 @@ it("accepts race request and starts race", async () => {
     }) ;
 
 
-    const token1 = global.getAuthToken('user-1' , 'test1@gmail.com');
-    const token2 = global.getAuthToken('user-2' , 'test2@gmail.com') ;
+    const cookie1 = global.getAuthCookie('user-1' , 'test1@gmail.com');
+    const cookie2 = global.getAuthCookie('user-2' , 'test2@gmail.com') ;
 
     const response1 = await request(app).post('/api/races/new')
-    .set('Authorization' , `Bearer ${token1}`)
+    .set('Cookie' , cookie1)
     .send({
         friendId : 'user-2' ,
         startPos : {
@@ -84,7 +84,7 @@ it("accepts race request and starts race", async () => {
     // accepting the race from the other user side
     const response = await request(app)
         .post("/api/races/accept-race")
-        .set("Authorization", `Bearer ${token2}`)
+        .set("Cookie", cookie2)
         .send({ raceId: raceId , accept: true })
         .expect(200);
 
@@ -113,11 +113,11 @@ it("cancels race request when accept is false", async () => {
     }) ;
 
 
-    const token1 = global.getAuthToken('user-1' , 'test1@gmail.com');
-    const token2 = global.getAuthToken('user-2' , 'test2@gmail.com') ;
+    const cookie1 = global.getAuthCookie('user-1' , 'test1@gmail.com');
+    const cookie2 = global.getAuthCookie('user-2' , 'test2@gmail.com') ;
 
     const response1 = await request(app).post('/api/races/new')
-    .set('Authorization' , `Bearer ${token1}`)
+    .set('Cookie' , cookie1)
     .send({
         friendId : 'user-2' ,
         startPos : {
@@ -141,7 +141,7 @@ it("cancels race request when accept is false", async () => {
 
     const response = await request(app)
         .post("/api/races/accept-race")
-        .set("Authorization", `Bearer ${token2}`)
+        .set("Cookie", cookie2)
         .send({ raceId: raceId , accept: false })
         .expect(200);
 

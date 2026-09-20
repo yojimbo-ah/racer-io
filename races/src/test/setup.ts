@@ -8,6 +8,7 @@ import redis from "../redis";
 
 declare global {
     var getAuthToken: (id?: string, email?: string) => string;
+    var getAuthCookie: (id?: string, email?: string) => string;
     var redisClient : Redis ;
 }
 
@@ -17,6 +18,7 @@ let redisServer : RedisMemoryServer ;
 beforeAll(async () => {
     process.env.NODE_ENV = "test";
     process.env.JWT_KEY = process.env.JWT_KEY || "supersecretpassword";
+    process.env.ACCESS_JWT_KEY = process.env.ACCESS_JWT_KEY || "supersecretaccesspassword";
 
     // mongo stuff and urls
     mongo = await MongoMemoryServer.create();
@@ -61,7 +63,13 @@ global.getAuthToken = (id = "test-user-id", email = "test@test.com") => {
             id,
             email,
         },
-        process.env.JWT_KEY!
+        process.env.ACCESS_JWT_KEY!
     );
+};
+
+// the access token is delivered to the app via the accessToken cookie,
+// so requests in the tests send it as a cookie rather than a Bearer header
+global.getAuthCookie = (id = "test-user-id", email = "test@test.com") => {
+    return `accessToken=${global.getAuthToken(id, email)}`;
 };
 

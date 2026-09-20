@@ -18,10 +18,10 @@ describe("POST /api/races/new", () => {
     });
 
     it("returns 400 for invalid request payload (no ending pos and friendId)", async () => {
-        const token = getAuthToken();
+        const authCookie = getAuthCookie();
         await request(app)
             .post("/api/races/new")
-            .set("Authorization", `Bearer ${token}`)
+            .set("Cookie", authCookie)
             .send({
                 startPos: { longitude: 10, latitude: 10 },
             })
@@ -29,10 +29,10 @@ describe("POST /api/races/new", () => {
     });
 
     it('returns error 400 , no user in redis databse ' , async () => {
-        const token1 = global.getAuthToken('user-1' , 'user1@gmail.com') ;
+        const token1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
         const response1 = await request(app)
         .post('/api/races/new')
-        .set('Authorization' , `Bearer ${token1}`)
+        .set('Cookie' , cookie1)
         .send({
             friendId : 'user-2' ,
             startPos : {
@@ -49,7 +49,7 @@ describe("POST /api/races/new", () => {
 
 
     it('returns error 400 , one of the users away from the starting position ' , async () => {
-        const token1 = global.getAuthToken('user-1' , 'user1@gmail.com') ;
+        const token1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
         await redis.hset('user-1' , {
             longitude : 10 ,
             latitude : 10 ,
@@ -68,7 +68,7 @@ describe("POST /api/races/new", () => {
 
         const response1 = await request(app)
         .post('/api/races/new')
-        .set('Authorization' , `Bearer ${token1}`)
+        .set('Cookie' , cookie1)
         .send({
             friendId : 'user-2' ,
             startPos : {
@@ -84,7 +84,7 @@ describe("POST /api/races/new", () => {
     })
 
     it("creates a race when payload is valid", async () => {
-        const token1 = global.getAuthToken('user-1' , 'user1@gmail.com') ;
+        const token1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
         await redis.hset('user-1' , {
             longitude : 10 ,
             latitude : 10 ,
@@ -103,7 +103,7 @@ describe("POST /api/races/new", () => {
 
         const response1 = await request(app)
         .post('/api/races/new')
-        .set('Authorization' , `Bearer ${token1}`)
+        .set('Cookie' , cookie1)
         .send({
             friendId : 'user-2' ,
             startPos : {
@@ -127,8 +127,8 @@ describe("POST /api/races/new", () => {
     }) ;
 
     it('error returns 400 , one of the users is not idle beceause he is in a race' , async () => {
-        const token1 = global.getAuthToken('user-1' , 'user1@gmail.com') ;
-        const token2 = global.getAuthToken('user-2' , 'user2@gmail.com') ;
+        const token1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
+        const cookie2 = global.getAuthCookie('user-2' , 'user2@gmail.com') ;
         await redis.hset('user-1' , {
             longitude : 10 ,
             latitude : 10 ,
@@ -147,7 +147,7 @@ describe("POST /api/races/new", () => {
 
         const response1 = await request(app)
         .post('/api/races/new')
-        .set('Authorization' , `Bearer ${token1}`)
+        .set('Cookie' , cookie1)
         .send({
             friendId : 'user-2' ,
             startPos : {
@@ -164,7 +164,7 @@ describe("POST /api/races/new", () => {
         const raceId = response1.body.raceId ;
         const reponse2 = await request(app)
         .post('/api/races/accept-race')
-        .set('Authorization' , `Bearer ${token2}`)
+        .set('Cookie' , cookie2)
         .send({
             accept : true ,
             raceId : raceId
@@ -174,7 +174,7 @@ describe("POST /api/races/new", () => {
 
         const response3 = await request(app)
         .post('/api/races/new')
-        .set('Authorization' , `Bearer ${token1}`)
+        .set('Cookie' , cookie1)
         .send({
             friendId : 'user-2' ,
             startPos : {
