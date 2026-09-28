@@ -5,7 +5,12 @@ import { Subjects , SubjectsUserCreationSaga , SubjectRaceSage ,
     UserCreationCancelledRacesEvent , RaceCancelledArchiveEvent , RaceCancelledPositionsEvent ,
     RaceCreatedCancelledSocketGateway , RaceCreatedSagaEvent , RaceCreatedResultPositionsArchiveEvent,
     UserCreatedSagaResultEvent,
-    RaceCreatedSagaResultEvent
+    RaceCreatedSagaResultEvent ,
+    RaceEndedSagaEvent ,
+    RaceEndedCancelledArchiveEvent ,
+    raceEndedCancelledPositionsEvent ,
+    RaceEndedSagaResultEvent ,
+    SubjectRaceEndedSaga
 } from "@racer-io/common";
 import { natsWrapper } from "../nats-wrapper";
 import { SpanStatusCode, context, propagation } from "@opentelemetry/api";
@@ -23,6 +28,12 @@ import RaceCancelledPositionsPublisher from "../events/race-created/publishers/r
 import RaceCancelledSocketgatewayPublisher from "../events/race-created/publishers/raceCancelledSocketGateway";
 import RaceCreatedResultSagaPublisher from "../events/race-created/publishers/raceCreatedResultSagaPublisher";
 import RaceCreatedSagaPublisher from "../events/race-created/publishers/raceCreatedSagaPublisher";
+
+// race-ended-saga
+import RaceEndedCancelledArchivePublisher from "../events/race-ended/publishers/raceEndedCancelledArchivePublisher";
+import RaceEndedCancelledPositionsPublisher from "../events/race-ended/publishers/raceEndedCancelledPositionsPublisher";
+import RaceEndedResultSagaPublisher from "../events/race-ended/publishers/raceEndedResultSagaPublisher";
+import RaceEndedSagaPublisher from "../events/race-ended/publishers/raceEndedSagaPublisher";
 
 // as you can see not all routes and listeners need to modify the data inside the databse
 // so some publishers will still be published directly , no need for the outbox pattren here
@@ -102,6 +113,27 @@ export async function publishAndMark(doc: OutboxEventDocument) {
             if (doc.eventType === SubjectRaceSage.raceCreatedsaga) {
                 const payload = doc.payload as RaceCreatedSagaEvent['data'] ;
                 await new RaceCreatedSagaPublisher(natsWrapper.client).publish(payload, carrier) ;
+            }
+
+            // race-ended-saga publishers
+
+            if (doc.eventType === SubjectRaceEndedSaga.raceEndedsaga) {
+                const payload = doc.payload as RaceEndedSagaEvent['data'] ;
+                await new RaceEndedSagaPublisher(natsWrapper.client).publish(payload) ;
+            } 
+
+            if (doc.eventType === SubjectRaceEndedSaga.raceEndedSagaResult) {
+                const payload = doc.payload as RaceEndedSagaResultEvent['data'] ;
+                await new RaceEndedResultSagaPublisher(natsWrapper.client).publish(payload) ;
+            }
+
+            if (doc.eventType === SubjectRaceEndedSaga.raceEndedCancelledArchive) {
+                const payload = doc.payload as RaceEndedCancelledArchiveEvent['data'] ;
+                await new RaceEndedCancelledArchivePublisher(natsWrapper.client).publish(payload) ;
+            }
+            if (doc.eventType === SubjectRaceEndedSaga.raceEndedCancelledPositions) {
+                const payload = doc.payload as raceEndedCancelledPositionsEvent['data'] ;
+                await new RaceEndedCancelledPositionsPublisher(natsWrapper.client).publish(payload) ;
             }
 
             doc.published = true;

@@ -1,10 +1,16 @@
 import "./tracing";
 import {app} from "./app";
 import { natsWrapper } from "./nats-wrapper";
+// races stration saga listeners
 import RaceCreatedResultPositionsListener from "./events/race-created/listeners/raceCreatedResultPositions";
 import RaceCreatedSagaListener from "./events/race-created/listeners/raceCreatedSagaListener";
+// user creation saga listeners
 import UserCreatedResultRacesArchiveListener from "./events/user-created/listeners/userCreatedResultArchiveRacesListener";
 import UserCreatedSagaListener from "./events/user-created/listeners/userCreatedSagaListener";
+// races ending saga listeners
+import RaceEndedResultPositionsArchiveListener from "./events/race-ended/listeners/raceEndedResultsPositionsArchive";
+import RaceEndedSagaListener from "./events/race-ended/listeners/raceEndedSagaListener";
+
 import { prepareMongo } from "./outbox/setMongoosePrimary";
 import { startOutboxRelay } from "./outbox/outboxRelay";
 import { connectMongo } from "./outbox/connectMongo";
@@ -57,6 +63,10 @@ const connect = async () => {
         // user created orchestrators
         new UserCreatedSagaListener(natsWrapper.client).listen() ;
         new UserCreatedResultRacesArchiveListener(natsWrapper.client).listen() ;
+
+        // race ended orchestarators 
+        new RaceCreatedResultPositionsListener(natsWrapper.client).listen() ;
+        new RaceCreatedSagaListener(natsWrapper.client).listen() ;
         // listen to mongo to connect before we configure it 
         await startOutboxRelay()
         app.listen(3000 , () => {

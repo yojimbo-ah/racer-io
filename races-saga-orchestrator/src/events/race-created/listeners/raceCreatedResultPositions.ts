@@ -1,12 +1,11 @@
-import { Listener , SubjectRaceSage , RaceCreatedResultPositionsArchiveEvent , Services, SubjectsUserCreationSaga, RaceCreatedSagaResultEvent} from "@racer-io/common";
+import { Listener , SubjectRaceSage , RaceCreatedResultPositionsArchiveEvent , Services, RaceCreatedSagaResultEvent} from "@racer-io/common";
 import queueGroupName from "../../queueGroupName";
 import { Message } from "node-nats-streaming";
 import { RaceSaga, Steps } from "../../../models/race-saga-model";
 import { SagaStep } from "../../../models/race-saga-model";
-import RaceCreatedResultSagaPublisher from "../publishers/raceCreatedResultSagaPublisher";
 import { componsate } from "../componsate";
 import OutboxEvent from "../../../models/outbox-saga-model";
-import mongoose, { mongo } from "mongoose";
+import mongoose  from "mongoose";
 
 // this listener treateat the events comming from both the services archive and positions at the same time 
 // weither it success or failure status 
