@@ -16,7 +16,7 @@ export default class RaceCreatedResultPositionsListener extends Listener <RaceCr
     subject = SubjectRaceSage.raceCreatedResultPositionsArchive as const ;
     queueGroupName = queueGroupName ;
     async onMessage(data: RaceCreatedResultPositionsArchiveEvent['data'], msg: Message): Promise<void> {
-        // still didnt add the logique here
+
         if (data.status) {
             // case of success 
             const raceSaga = await RaceSaga.findById(data.sagaId) ;

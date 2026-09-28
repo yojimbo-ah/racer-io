@@ -67,6 +67,7 @@ const connect = async () => {
         // race ended orchestarators 
         new RaceCreatedResultPositionsListener(natsWrapper.client).listen() ;
         new RaceCreatedSagaListener(natsWrapper.client).listen() ;
+        
         // listen to mongo to connect before we configure it 
         await startOutboxRelay()
         app.listen(3000 , () => {
