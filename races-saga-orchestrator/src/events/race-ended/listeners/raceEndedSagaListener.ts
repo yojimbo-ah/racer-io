@@ -37,6 +37,8 @@ export default class RaceEndedSagaListener extends Listener<RaceFinishedEvent>{
         } catch (err) {
             await new RaceEndedResultSagaPublisher(natsWrapper.client).publish({
                 raceId : data.race.raceId ,
+                // false here such that the races service knows 
+                // that something went wrong and remove the initlization 
                 status : false
             }) ;
         } finally {

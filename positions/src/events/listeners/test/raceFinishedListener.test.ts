@@ -1,5 +1,5 @@
 import { RaceFinishedEvent, RaceStatus, userStatus } from "@racer-io/common";
-import { RaceFinishedListener } from "../raceFinishedListener";
+import { RaceFinishedListener } from "../raceEndedListener";
 import { natsWrapper } from "../../../nats-wrapper";
 import { Message } from 'node-nats-streaming' ;
 

@@ -54,15 +54,5 @@ export default class RaceCreatedSagaListener  extends Listener<RaceStartedEvent>
             msg.ack() ;
         }
 
-
-        //  publish to positions and archive service
-        // will be moved to the outbox relay
-        // await new RaceCreatedSagaPublisher(this.client).publish({
-        //     sagaId : String(raceSaga._id) ,
-        //     payload : data
-        // });
-
-        // publish to archive service
-
     }
 }

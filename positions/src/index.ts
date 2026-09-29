@@ -7,7 +7,7 @@ import redis from "./redis";
 import blacklistRedis from "./blacklistRedis";
 import RaceCancelledPositionsListener from "./events/listeners/raceCancelledPositionsListener";
 import RaceCreatedSagaListener from "./events/listeners/raceCreatedSagaListener";
-import { RaceFinishedListener } from "./events/listeners/raceFinishedListener";
+import { RaceFinishedListener } from "./events/listeners/raceEndedListener";
 import { RaceCancelledListener } from "./events/listeners/raceCancelledListener";
 import { PositionUpdatedSocketListener } from "./events/listeners/positionUpdatedSocketListener";
 import { UserConnectedListener } from "./events/listeners/userConnectedListener";
