@@ -1,4 +1,19 @@
-# ---- Positions REST API (rate-limited) ----
+# =============================================================================
+# LOAD TEST / DEVELOPMENT STACK -- NO RATE LIMITING
+# =============================================================================
+# Identical to infra/k8s/ingress-srv.yaml except that every
+# `nginx.ingress.kubernetes.io/limit-*` annotation has been removed, so the k6
+# tests measure the services instead of nginx rejecting requests with 429.
+#
+# Apply this INSTEAD of infra/k8s/ingress-srv.yaml, not on top of it:
+#
+#   kubectl apply -f infra/base/
+#
+# The per-service Redis limiters (socket-gateway / positions) are disabled by
+# POSITION_RATE_LIMIT_DISABLED in the matching *-depl.yaml files here.
+# =============================================================================
+
+# ---- Positions REST API ----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,8 +21,6 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/limit-rps: "20"
-    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
 spec:
   ingressClassName: nginx
   tls:
@@ -26,7 +39,7 @@ spec:
                 port:
                   number: 3000
 ---
-# ---- Socket.io (no aggressive rate limiting — persistent/streaming traffic) ----
+# ---- Socket.io ----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -55,7 +68,7 @@ spec:
                 port:
                   number: 3000
 ---
-# ---- Auth (strict — brute force / credential stuffing risk) ----
+# ---- Auth ----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -63,8 +76,6 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/limit-rpm: "5"
-    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
 spec:
   ingressClassName: nginx
   tls:
@@ -91,8 +102,6 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/limit-rps: "30"
-    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
 spec:
   ingressClassName: nginx
   tls:
@@ -119,7 +128,6 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/limit-rps: "10"
 spec:
   ingressClassName: nginx
   tls:
@@ -145,7 +153,6 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/limit-rps: "10"
 spec:
   ingressClassName: nginx
   tls:

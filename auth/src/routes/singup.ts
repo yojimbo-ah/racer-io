@@ -3,7 +3,7 @@ import { body } from "express-validator";
 import { BadRequestError , validateRequest , UserPayload , RefreshPayload, userCreatedEvent, Subjects } from "@racer-io/common"
 import User  from "../models/user-model";
 import jwt from "jsonwebtoken";
-import { Expiration , ExpirationCookies, ExpirationNum} from "../consts/jwt-access-time";
+import { Expiration , ExpirationCookies, ExpirationNum, ACCESS_COOKIE_PATH , REFRESH_COOKIE_PATH } from "../consts/jwt-access-time";
 import Session from "../models/session";
 import OutboxEvent from "../models/outbox-model";
 import mongoose from "mongoose";
@@ -77,7 +77,7 @@ router.post('/api/users/signup' ,
         const session = Session.build({
             userId : String(user._id) ,
             hashSession : '' ,
-            expiresAt : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ,
+            expiresAt : new Date(Date.now() + ExpirationNum.refresh) ,
             ip : req.ip ,
             userAgent : req.headers['user-agent']
         })    
@@ -99,19 +99,20 @@ router.post('/api/users/signup' ,
         session.hashSession = refreshToken ;
 
         await session.save() ;
-        res.cookie(ExpirationCookies.accessToken , accessToken , {
-            httpOnly: true,
-            secure: true,        // HTTPS only
-            sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work  
-            maxAge: ExpirationNum.access,
-        }) ;
-        res.cookie(ExpirationCookies.refreshTken , refreshToken , {
-            httpOnly: true,
-            secure: true,        // HTTPS only
-            sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work
-            path: '/api/auth/refresh',
-            maxAge: ExpirationNum.refresh, 
-        })
+res.cookie(ExpirationCookies.accessToken , accessToken , {
+        httpOnly: true,
+        secure: true,        // HTTPS only
+        sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work  
+        path : ACCESS_COOKIE_PATH ,
+        maxAge: ExpirationNum.access,
+    }) ;
+    res.cookie(ExpirationCookies.refreshTken , refreshToken , {
+        httpOnly: true,
+        secure: true,        // HTTPS only
+        sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work
+        path : REFRESH_COOKIE_PATH ,
+        maxAge: ExpirationNum.refresh, 
+    })
         req.session = {
             jwt : refreshToken
         }

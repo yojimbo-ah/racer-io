@@ -1,0 +1,70 @@
+#section that create the deployment and the pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: positions-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: positions
+  template: 
+    metadata:
+      labels:
+        app: positions
+    spec:
+      containers:
+        - name: positions
+          image: ahmed0ahmed/racer-positions
+          imagePullPolicy : IfNotPresent
+          env: 
+            - name: NATS_CLUSTER_ID
+              value: 'racer.io'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef: 
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: 'nats://nats-srv:4222'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+            - name: ACCESS_JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: access-jwt-key
+                  key: ACCESS_JWT_KEY
+            - name: OTEL_COLLECTOR_URL
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_SERVICE_NAME
+              value: "positions-service"
+            - name: REDIS_HOST
+              value: positions-redis-srv
+            - name: REDIS_HOST_BLACKLIST
+              value: blacklist-redis-srv
+            - name: REDIS_HOST_IDEMPOTENCY
+              value: positions-redis-srv
+            # load test stack: no per-user throttling on position:update
+            # (infra/k8s/positions-depl.yaml does not set this)
+            - name: POSITION_RATE_LIMIT_DISABLED
+              value: 'true'
+---
+#kubernets service cluesterip so we can acess the pod
+#default service is clusterip service that why we didint have to
+#specifie it
+apiVersion: v1
+kind: Service
+metadata: 
+  name: positions-srv
+spec: 
+  selector:
+    app: positions
+  ports:
+    - name: positions
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

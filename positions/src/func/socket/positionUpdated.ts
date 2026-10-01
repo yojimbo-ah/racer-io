@@ -2,7 +2,7 @@ import type { PositionEventPayload , Position } from "@racer-io/common"
 import PositionUpdatedPublisher from "../../events/publishers/PositionUpdatedPublisher"
 import redis from "../../redis";
 import { natsWrapper } from "../../nats-wrapper";
-import { positionRateLimiter } from "../../rate-limiters/positionRateLimiter";
+import { consumePositionUpdate } from "../../rate-limiters/positionRateLimiter";
 import { anomalyDetection } from "../helper/anomalyDetection";
 import { RACE_INTERVAL_EXPIRY_TIME } from "../../../consts/expiry-times";
 import { userStatus } from "@racer-io/common";
@@ -22,9 +22,7 @@ export type PositionString = {
 // and publish a cheater detected event for other services
 
 export const positionUpdatedSocket = async (payload : PositionEventPayload , userId : string) => {
-    try {
-        await positionRateLimiter.consume(userId) ;
-    } catch (err) {
+    if (!await consumePositionUpdate(userId)) {
         console.log('reached the max updates per second') ;
         return ;
     }

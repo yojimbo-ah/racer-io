@@ -2,8 +2,10 @@ apiVersion: skaffold/v2beta25
 kind: Config
 deploy: 
   kubectl:
+    # there are two options base and k8s , base is used for testing beceause it not rate limited
+    # and used when testing with k6 , but k6 is used for the deploy
     manifests:
-      - ./infra/k8s/*
+      - ./infra/base/*
 build:
   local:
     push: false

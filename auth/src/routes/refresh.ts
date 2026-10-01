@@ -1,8 +1,8 @@
 import express , {Request , Response} from "express" ;
-import { requireAccessAuth , currentRefreshToken , UserPayload } from "@racer-io/common";
+import { requireAccessAuth , currentRefreshToken , UserPayload , NotAuthorizedError } from "@racer-io/common";
 import User from "../models/user-model";
 import jwt from 'jsonwebtoken' ;
-import { Expiration , ExpirationNum , ExpirationCookies} from "../consts/jwt-access-time";
+import { Expiration , ExpirationNum , ExpirationCookies , ACCESS_COOKIE_PATH } from "../consts/jwt-access-time";
 import Session from "../models/session";
 
 
@@ -23,9 +23,9 @@ router.get('/api/refresh' ,
 
 
         // check the session validaty 
-        const session = await Session.findById(refreshUser!.id) ;
+        const session = await Session.findById(refreshUser!.sessionId) ;
         if (!session) {
-            throw new Error('The session is not valid')
+            throw new NotAuthorizedError('The session is not valid')
         } ;
 
         if (session.expiresAt < new Date()) {
@@ -33,7 +33,7 @@ router.get('/api/refresh' ,
             // valid anymore
 
 
-            throw new Error('your session has expired') ;
+            throw new NotAuthorizedError('your session has expired') ;
         }
 
         const userPayload : UserPayload = {
@@ -49,7 +49,7 @@ router.get('/api/refresh' ,
             httpOnly: true,
             secure: true,        // HTTPS only
             sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work
-            path: '/api/auth/refresh',  // scoped narrowly — this cookie is only ever sent to this one endpoint
+            path : ACCESS_COOKIE_PATH ,
             maxAge: ExpirationNum.access ,
         })
         res.status(200).json({token : jwtToken}) ;

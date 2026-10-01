@@ -1,0 +1,70 @@
+#section that create the deployment and the pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: races-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: races
+  template: 
+    metadata:
+      labels:
+        app: races
+    spec:
+      containers:
+        - name: races
+          image: ahmed0ahmed/racer-races
+          imagePullPolicy : IfNotPresent
+          env:
+            - name: MONGO_URI
+              value: 'mongodb://races-mongo-srv:27017/races'
+            - name: MONGO_SRV
+              value: 'races-mongo-srv:27017'
+            - name: NATS_CLUSTER_ID
+              value: 'racer.io'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef: 
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: 'nats://nats-srv:4222'
+            - name: OTEL_COLLECTOR_URL
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-lgtm-srv:4318"
+            - name: OTEL_SERVICE_NAME
+              value: "races-service"
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+            - name: ACCESS_JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: access-jwt-key
+                  key: ACCESS_JWT_KEY
+            - name: REDIS_HOST
+              value: races-redis-srv
+            - name: REDIS_HOST_BLACKLIST
+              value: blacklist-redis-srv
+            - name: REDIS_HOST_IDEMPOTENCY
+              value: races-redis-srv
+---
+#kubernets service cluesterip so we can acess the pod
+#default service is clusterip service that why we didint have to
+#specifie it
+apiVersion: v1
+kind: Service
+metadata: 
+  name: races-srv
+spec: 
+  selector:
+    app: races
+  ports:
+    - name: races
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

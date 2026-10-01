@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: socket-gateway-redis-depl
+  labels:
+    app: socket-gateway-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: socket-gateway-redis
+  template: 
+    metadata:
+      labels:
+        app: socket-gateway-redis
+    spec:
+      containers:
+        - name: socket-gateway-redis
+          image: redis:latest
+          ports:
+            - containerPort: 27017
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata: 
+  name: socket-gateway-redis-srv
+spec: 
+  selector:
+    app: socket-gateway-redis
+  ports:
+    - name: db
+      protocol: TCP
+      port: 6379
+      targetPort: 6379

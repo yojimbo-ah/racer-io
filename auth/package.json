@@ -5,7 +5,22 @@
   "scripts": {
     "start": "ts-node-dev --poll src/index.ts",
     "test": "jest --watchAll --no-cache",
-    "test:ci": "jest"
+    "test:ci": "jest",
+    "k6": "k6 run src/test/k6_tests/mixed-auth.js",
+    "k6:signup": "k6 run src/test/k6_tests/signup.js",
+    "k6:signin": "k6 run src/test/k6_tests/signin.js",
+    "k6:refresh": "k6 run src/test/k6_tests/refresh.js",
+    "k6:refresh-session": "k6 run src/test/k6_tests/refresh-session.js",
+    "k6:current-user": "k6 run src/test/k6_tests/current-user.js",
+    "k6:logout": "k6 run src/test/k6_tests/logout.js",
+    "k6:logout-all": "k6 run src/test/k6_tests/logout-all.js",
+    "k6:concurrent": "k6 run src/test/k6_tests/concurrent-sessions.js",
+    "k6:validation": "k6 run src/test/k6_tests/validation.js",
+    "k6:bad-credentials": "k6 run src/test/k6_tests/bad-credentials.js",
+    "k6:unauthenticated": "k6 run src/test/k6_tests/unauthenticated.js",
+    "k6:idempotency": "k6 run src/test/k6_tests/idempotency.js",
+    "k6:health": "k6 run src/test/k6_tests/health.js",
+    "k6:mixed": "k6 run src/test/k6_tests/mixed-auth.js"
   },
   "jest": {
     "preset": "ts-jest",

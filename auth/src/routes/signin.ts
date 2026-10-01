@@ -4,7 +4,7 @@ import { validateRequest , BadRequestError , UserPayload , RefreshPayload} from 
 import jwt from "jsonwebtoken" ;
 import { Password } from "../services/password";
 import User from "../models/user-model";
-import { Expiration , ExpirationNum , ExpirationCookies} from "../consts/jwt-access-time";
+import { Expiration , ExpirationNum , ExpirationCookies , ACCESS_COOKIE_PATH , REFRESH_COOKIE_PATH} from "../consts/jwt-access-time";
 import Session from "../models/session";
 
 
@@ -62,19 +62,20 @@ router.post('/api/users/signin' ,
         req.session = {
             jwt : refreshToken
         }
-        res.cookie(ExpirationCookies.accessToken , accessToken , {
-            httpOnly: true,
-            secure: true,        // HTTPS only
-            sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work  
-            maxAge: ExpirationNum.access,
-        }) ;
-        res.cookie(ExpirationCookies.refreshTken , refreshToken , {
-            httpOnly: true,
-            secure: true,        // HTTPS only
-            sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work
-            path: '/api/auth/refresh',
-            maxAge: ExpirationNum.refresh, 
-        })
+res.cookie(ExpirationCookies.accessToken , accessToken , {
+        httpOnly: true,
+        secure: true,        // HTTPS only
+        sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work  
+        path : ACCESS_COOKIE_PATH ,
+        maxAge: ExpirationNum.access,
+    }) ;
+    res.cookie(ExpirationCookies.refreshTken , refreshToken , {
+        httpOnly: true,
+        secure: true,        // HTTPS only
+        sameSite: 'strict',  // or 'lax' if you need cross-site navigation to work
+        path : REFRESH_COOKIE_PATH ,
+        maxAge: ExpirationNum.refresh, 
+    })
         res.status(201).json({user : user , token : accessToken , accessToken : refreshToken}) ;
 })
 
