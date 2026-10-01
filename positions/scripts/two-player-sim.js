@@ -93,6 +93,7 @@ async function main() {
   const sockets = tokens.map((token) =>
     io(serverUrl, {
       transports: ['websocket', 'polling'],
+      extraHeaders: { Cookie: `accessToken=${token}` },
       auth: { token },
       rejectUnauthorized: !allowInsecureTls,
     })

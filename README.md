@@ -279,6 +279,181 @@ sequenceDiagram
   W->>G: Publishes the prediction updated event
 ```
 
+## Testing And Observability
+
+The repository uses two testing layers for different purposes:
+
+- **Jest** tests service code in isolation. These tests cover routes, middleware,
+  helpers, event handlers, and error paths with mocks and test-specific dependencies.
+- **k6** tests the deployed system over HTTP and Socket.IO. These tests exercise the
+  ingress, cookies, Redis, NATS, service-to-service behavior, readiness, rate limiting,
+  and real network latency.
+
+Use Jest to answer: "Does this piece of code behave correctly?"
+Use k6 to answer: "Does the running system remain correct and responsive under load?"
+
+### Jest Tests
+
+Run service tests from the repository root:
+
+```bash
+npm --prefix auth run test:ci
+npm --prefix positions run test:ci
+npm --prefix races run test:ci
+npm --prefix archive run test:ci
+npm --prefix socket-gateway run test:ci
+npm --prefix races-saga-orchestrator run test:ci
+```
+
+For watch mode, change into a service directory and run `npm test`.
+
+Jest setup files may use mocks or in-memory dependencies. For example, the positions
+Jest setup uses `RedisMemoryServer` and flushes it between tests. This is useful for
+fast, repeatable unit tests, but it is not a substitute for the live Redis, NATS,
+Socket.IO, ingress, and container network used by k6.
+
+### k6 Tests
+
+Auth scenarios are under `auth/src/test/k6_tests`. Positions scenarios are under
+`positions/src/test/k6_tests`:
+
+```bash
+# Auth behavior and cookie flow
+k6 run --insecure-skip-tls-verify auth/src/test/k6_tests/auth-flow.js
+
+# Positions health and readiness
+k6 run --insecure-skip-tls-verify positions/src/test/k6_tests/health.js
+
+# Authenticated nearby-user query
+k6 run --insecure-skip-tls-verify positions/src/test/k6_tests/aroundme.js
+
+# Socket.IO position update flow
+k6 run --insecure-skip-tls-verify positions/src/test/k6_tests/position-stream.js
+```
+
+The TLS flag is needed when the local `ticket.com` certificate is not trusted by k6.
+For direct service testing, use port-forwarding and override the URLs:
+
+```bash
+kubectl port-forward service/auth-srv 3000:3000
+kubectl port-forward service/positions-srv 3011:3000
+kubectl port-forward service/socket-gateway-srv 3012:3000
+
+k6 run \
+  -e AUTH_URL=http://127.0.0.1:3000 \
+  -e POSITIONS_URL=http://127.0.0.1:3011 \
+  -e SOCKET_URL=http://127.0.0.1:3012 \
+  positions/src/test/k6_tests/position-stream.js
+```
+
+The k6 tests create isolated test users where required and clean them up during
+teardown. Position data is stored in Redis, not MongoDB. Do not run `FLUSHDB` against
+a shared Redis instance during a load test; it can remove state belonging to another
+service or another test. Use the per-test cleanup paths and Redis key expiry instead.
+
+### Kubernetes Test Setups
+
+There are two deployment configurations:
+
+| Setup | Intended use | Rate limiting | Deployment |
+| --- | --- | --- | --- |
+| `infra/k8s` | Normal development and protected behavior | Nginx limits and position update limits enabled | `skaffold dev` |
+| `infra/base` | Local k6 load and behavior tests | Nginx limits removed; position update limits disabled | `kubectl apply -f infra/base/` |
+
+The base setup still uses the real MongoDB, Redis, NATS, ingress, and service
+containers. It removes selected limits so k6 can measure service behavior instead of
+mostly measuring `429` responses from Nginx. It should only be used locally or on a
+throwaway cluster.
+
+Use only one setup at a time. To switch to the load-test setup:
+
+```bash
+skaffold delete
+kubectl apply -f infra/base/
+```
+
+To return to the normal development setup:
+
+```bash
+kubectl delete -f infra/base/ --ignore-not-found
+skaffold dev
+```
+
+Do not use memory MongoDB or Redis services for k6. They are appropriate for isolated
+Jest tests, but they bypass the networking, persistence, expiry, shared state, NATS
+events, and rate-limit behavior that a live-system test is intended to measure.
+
+### OpenTelemetry And Grafana
+
+The `otel-lgtm` deployment contains the OpenTelemetry Collector, Grafana, Tempo, and
+the metrics backend. The services export telemetry to the collector using OTLP:
+
+- OTLP HTTP collector endpoint: `otel-lgtm-srv:4318`
+- OTLP gRPC collector endpoint: `otel-lgtm-srv:4317`
+- Grafana service port: `3001`, targeting the Grafana container on port `3000`
+- Tempo stores distributed traces collected from the services
+
+Open Grafana locally with:
+
+```bash
+kubectl port-forward service/otel-lgtm-srv 3001:3001
+```
+
+Then open `http://localhost:3001`. In Grafana:
+
+1. Use **Explore** with the Tempo data source to inspect a request across ingress,
+   auth, socket-gateway, positions, races, and NATS-related spans.
+2. Filter by service name, route, or trace ID from a slow request.
+3. Compare the span durations to find whether time is spent in ingress, application
+   code, Redis, MongoDB, NATS, or another downstream service.
+4. Check whether errors and long traces begin at the same time as a k6 load increase.
+
+Service telemetry is sent to OpenTelemetry automatically by the deployed services.
+k6's terminal summary is separate from service telemetry. To keep a local k6 result for
+comparison, export its summary and raw samples:
+
+```bash
+New-Item -ItemType Directory -Force artifacts/k6 | Out-Null
+k6 run `
+  --insecure-skip-tls-verify `
+  --summary-export artifacts/k6/auth-flow-summary.json `
+  --out json=artifacts/k6/auth-flow-samples.json `
+  auth/src/test/k6_tests/auth-flow.js
+```
+
+To display k6 metrics in Grafana over time, configure a metrics output supported by the
+Grafana stack, such as Prometheus remote write or the k6 OpenTelemetry output. The
+required destination is environment-specific and is not hard-coded in this repository;
+do not assume that `--out experimental-prometheus-rw` works until its remote-write URL
+and credentials are configured.
+
+### Finding Bottlenecks And Slowdowns
+
+Read the k6 summary and Grafana together. The most useful k6 signals are:
+
+- `http_req_duration` p95 and p99: tail latency under load
+- `http_req_failed`: transport and unexpected HTTP failures
+- `checks`: functional assertions that stopped passing
+- `http_req_duration{name:...}`: latency for a specific route or operation
+- `ws_connecting` and custom position counters: Socket.IO connection and update health
+- `429` or custom rate-limit metrics: whether infrastructure or service throttling is
+  dominating the run
+
+Compare the same scenario at the same VU count across multiple runs. A likely slowdown
+looks like rising p95/p99 latency while request volume is stable. Use Grafana traces to
+identify the responsible span, then check pod logs and resource usage:
+
+```bash
+kubectl get pods
+kubectl top pods
+kubectl logs deployment/positions-depl --tail=200
+kubectl logs deployment/socket-gateway-depl --tail=200
+```
+
+Repeatable k6 summaries let you compare commits or configuration changes. Grafana and
+OpenTelemetry explain where the time went; k6 verifies whether the user-visible request
+actually became slower or less reliable.
+
 ## Position Update Flow
 
 ```mermaid

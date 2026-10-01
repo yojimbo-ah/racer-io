@@ -9,7 +9,10 @@ export class UserDisConnectedListener extends Listener <UserDisConnectedEvent> {
     async onMessage(data: UserDisConnectedEvent['data'] , msg: Message): Promise<void> {
         // will add the logique later
         // the user will not be set to idle directly here , 
-        // there will be some logique and i still didnt add it 
+        await redis.multi()
+            .zrem('active:users', data.userId)
+            .del(`user:${data.userId}`, `raceinterval:${data.userId}`)
+            .exec() ;
         msg.ack() ;
     }
 }

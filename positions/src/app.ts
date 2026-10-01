@@ -17,6 +17,8 @@ const app = express() ;
 app.set('trust proxy' , true) ;
 app.use(express.json()) ;
 app.use(cookieParser()) ;
+app.use(readyzRouter) ;
+app.use(healthzRouter) ;
 app.use(currentUser) ;
 // this route is to check if the user is black listed (or the account doesnt exist)
 // in case of login or singup failure
@@ -24,8 +26,6 @@ app.use(blacklistRedis.requireNotBlacklisted()) ;
 app.use(requireAuth) ;
 app.use(underSupervision) ;
 app.use(getUsersAroundMe) ;
-app.use(readyzRouter) ;
-app.use(healthzRouter) ;
 
 
 app.all('*' , async () => {

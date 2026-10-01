@@ -5,6 +5,9 @@
   "scripts": {
     "start": "ts-node-dev --poll src/index.ts",
     "simulate:two-player": "node scripts/two-player-sim.js",
+    "k6:health": "k6 run src/test/k6_tests/health.js",
+    "k6:aroundme": "k6 run src/test/k6_tests/aroundme.js",
+    "k6:position-stream": "k6 run src/test/k6_tests/position-stream.js",
     "test": "jest --watchAll --no-cache",
     "test:ci": "jest"
   },
