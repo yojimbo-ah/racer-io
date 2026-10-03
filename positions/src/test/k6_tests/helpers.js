@@ -30,7 +30,9 @@ export function buildOptions(thresholds = {}) {
 }
 
 export function uniqueUser() {
-  const id = `${__VU}_${__ITER}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const vu = typeof __VU === 'undefined' ? 'setup' : __VU;
+  const iteration = typeof __ITER === 'undefined' ? 'setup' : __ITER;
+  const id = `${vu}_${iteration}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   return {
     email: `positions_${id}@test.com`,
     password: PASSWORD,
@@ -71,7 +73,7 @@ export function createTestUser() {
 
   return {
     user,
-    response,
+    status: response.status,
     accessToken: responseJson(response, 'token'),
     refreshToken: response.cookies?.refreshToken?.[0]?.value || responseJson(response, 'accessToken'),
   };

@@ -15,6 +15,26 @@ k6 run --insecure-skip-tls-verify positions/src/test/k6_tests/aroundme.js
 k6 run --insecure-skip-tls-verify positions/src/test/k6_tests/position-stream.js
 ```
 
+`position-stream.js` is the concurrent load scenario. It creates `STREAM_USERS` test
+users during setup, assigns one user to each VU, opens one Socket.IO connection per VU,
+and sends position updates repeatedly until the stream duration ends. For example, 20
+users sending an update every 250 ms for 30 seconds:
+
+```bash
+k6 run \
+	--insecure-skip-tls-verify \
+	--vus 20 \
+	--duration 30s \
+	-e STREAM_USERS=20 \
+	-e UPDATE_INTERVAL_MS=250 \
+	-e STREAM_DURATION_MS=30000 \
+	positions/src/test/k6_tests/position-stream.js
+```
+
+Keep `STREAM_USERS` equal to the VU count so every VU gets its own user and Redis
+position key. The test cleans up the auth users after the run; disconnected position
+state is removed by the positions disconnect listener and also expires from Redis.
+
 Or port-forward the services and use direct URLs:
 
 ```bash

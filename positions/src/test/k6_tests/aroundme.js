@@ -16,8 +16,8 @@ export const options = buildOptions({
 
 export function setup() {
   const session = createTestUser();
-  if (session.response.status !== 201 || !session.accessToken) {
-    throw new Error(`Could not create positions test user: ${session.response.status}`);
+  if (session.status !== 201 || !session.accessToken) {
+    throw new Error(`Could not create positions test user: ${session.status}`);
   }
   return session;
 }

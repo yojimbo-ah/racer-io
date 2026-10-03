@@ -1,5 +1,5 @@
 import { check } from 'k6';
-import { authenticate, loadOptions, refresh, responseJson, think } from './helpers.js';
+import { authenticate, loadOptions, refresh, think } from './helpers.js';
 
 const ROUNDS = Number(__ENV.ROUNDS || 1);
 
@@ -26,9 +26,9 @@ export default function () {
     check(res, {
       [`refresh round ${round} 200`]: (response) => response.status === 200,
       [`refresh round ${round} returns an access token`]: (response) =>
-        Boolean(responseJson(response, 'token')),
+        Boolean(response.json('token')),
       [`refresh round ${round} keeps the user`]: (response) =>
-        responseJson(response, 'token') !== undefined,
+        response.json('token') !== undefined,
     });
 
     if (res.status !== 200) {

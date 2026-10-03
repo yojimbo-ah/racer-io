@@ -68,7 +68,7 @@ export function rampOptions(stages, thresholds = {}) {
 // -------------------------------------------------------------------- fixtures
 
 export function uniqueUser() {
-  const id = `${__VU}_${__ITER}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const id = `${__VU}_${__ITER}_${Date.now()}`;
   return {
     email: `load_${id}@test.com`,
     password: PASSWORD,
@@ -100,8 +100,8 @@ export function tagged(name, params = {}) {
 
 export function jsonOptions(extra = {}) {
   return {
-    ...extra,
     headers: { 'Content-Type': 'application/json', ...(extra.headers || {}) },
+    ...extra,
   };
 }
 
@@ -129,18 +129,6 @@ export function refreshCookie(response) {
 
 export function accessCookie(response) {
   return response.cookies?.accessToken?.[0]?.value;
-}
-
-export function responseJson(response, selector) {
-  if (!response?.body) {
-    return undefined;
-  }
-
-  try {
-    return selector === undefined ? response.json() : response.json(selector);
-  } catch {
-    return undefined;
-  }
 }
 
 export function expectClientErrors() {
@@ -202,12 +190,11 @@ export function rawPost(path, body, params = {}, name = 'raw') {
 // refreshToken cookie, while `token` is the access token -- so read it from the cookie
 export function authenticate(user = uniqueUser()) {
   const response = signup(user);
-  const body = responseJson(response) || {};
 
   return {
     user,
     response,
-    accessToken: body.token || accessCookie(response),
-    refreshToken: refreshCookie(response) || body.accessToken,
+    accessToken: response.json('token') || accessCookie(response),
+    refreshToken: refreshCookie(response) || response.json('accessToken'),
   };
 }

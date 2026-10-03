@@ -6,7 +6,8 @@
   "scripts": {
     "start": "ts-node-dev --poll src/index.ts",
     "test": "jest --watchAll --no-cache",
-    "test:ci": "jest"
+    "test:ci": "jest",
+    "k6:race-start": "k6 run --insecure-skip-tls-verify src/test/k6_tests/race-start.js"
   },
   "jest": {
     "preset": "ts-jest",

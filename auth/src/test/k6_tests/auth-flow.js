@@ -5,7 +5,6 @@ import {
   loadOptions,
   logout,
   refresh,
-  responseJson,
   think,
 } from './helpers.js';
 
@@ -36,14 +35,14 @@ export default function () {
   check(me, {
     'currentUser 200': (response) => response.status === 200,
     'currentUser matches the signup email': (response) =>
-      responseJson(response, 'currentUser.email') === session.user.email,
+      response.json('currentUser.email') === session.user.email,
   });
 
   const refreshed = refresh(session.refreshToken);
 
   check(refreshed, {
     'refresh 200': (response) => response.status === 200,
-    'refresh returns a new access token': (response) => Boolean(responseJson(response, 'token')),
+    'refresh returns a new access token': (response) => Boolean(response.json('token')),
   });
 
   const out = logout(session.refreshToken);
@@ -51,7 +50,7 @@ export default function () {
   check(out, {
     'logout 200': (response) => response.status === 200,
     'logout confirms success': (response) =>
-      responseJson(response, 'message') === 'logout had been successful',
+      response.json('message') === 'logout had been successful',
   });
 
   think();
