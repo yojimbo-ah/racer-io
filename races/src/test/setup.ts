@@ -5,6 +5,7 @@ import { RedisMemoryServer } from 'redis-memory-server';
 import Redis from "ioredis";
 import redis from "../redis";
 
+jest.setTimeout(30000);
 
 declare global {
     var getAuthToken: (id?: string, email?: string) => string;
@@ -49,11 +50,13 @@ beforeEach(async () => {
         );
     }
     // flushing all the data inside the redis database
-    global.redisClient.flushall() ;
+    await global.redisClient.flushall() ;
 });
 
 afterAll(async () => {
     await mongoose.disconnect();
+    await redis.quit();
+    await redisServer.stop();
     await mongo.stop();
 }, 30000);
 

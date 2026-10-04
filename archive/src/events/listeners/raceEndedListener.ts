@@ -1,8 +1,13 @@
-import { Listener , RaceStatus , RaceEndedSagaEvent, SubjectRaceEndedSaga , Services} from "@racer-io/common";
+import { Listener , RaceStatus , RaceEndedSagaEvent, SubjectRaceEndedSaga , Services , 
+    raceEndedCancelledPositionsEvent , SubjectRaceSage , RaceEndedResultPositionsArchiveEvent 
+} from "@racer-io/common";
 import { queueGroupName } from "../queueGroupName";
 import { Message } from "node-nats-streaming";
 import Race from "../../models/race-model";
 import RaceEndedResultPositionsArchivePublisher from "../publishers/raceEndedResultPositionsArchive";
+import OutboxEvent from "../../models/outbox-model";
+import { context, propagation } from "@opentelemetry/api";
+import mongoose, { mongo } from 'mongoose' ;
 
 // change it to listen to another even not this event 
 // the event to listen to is : RaceEndedSagaEvent
@@ -16,25 +21,33 @@ export class RaceFinishedListener extends Listener <RaceEndedSagaEvent>{
     subject = SubjectRaceEndedSaga.raceEndedsaga as const ;
     async onMessage(data: RaceEndedSagaEvent['data'], msg: Message): Promise<void> {
         // logique to save the user positon
+
+        const race = await Race.findById(data.payload.race.raceId) ;
+        if (!race) {
+            throw new Error('error happened') ;
+        }
+
+        race.winner = data.payload.userData.winner ;
+        race.raceStatus = RaceStatus.RaceEnded ;
+        const mongoSession = await mongoose.startSession() ;
         try {
-            const race = await Race.findById(data.payload.race.raceId) ;
-            if (!race) {
-                throw new Error('error happened') ;
-            }
-
-            race.winner = data.payload.userData.winner ;
-            race.raceStatus = RaceStatus.RaceEnded ;
-
-            await race.save() ;
-            // success event here
-            new RaceEndedResultPositionsArchivePublisher(this.client).publish({
-                raceId : data.payload.race.raceId ,
-                sagaId : data.sagaId ,
-                service : Services.archive ,
-                status : true
+            mongoSession.withTransaction(async () => {
+                race.save({session : mongoSession}) ;
+                const payload : RaceEndedResultPositionsArchiveEvent['data'] = {
+                    raceId : data.payload.race.raceId ,
+                    sagaId : data.sagaId ,
+                    service : Services.archive ,
+                    status : true
+                } ;
+                const carrier: Record<string, string> = {};
+                propagation.inject(context.active(), carrier);
+                await OutboxEvent.build({
+                    eventType : SubjectRaceEndedSaga.raceEndedResultPositionsArchive ,
+                    payload ,
+                    traceCarrier : carrier
+                }).save({session : mongoSession}) ;
             })
         } catch (err) {
-            console.log(err) ;
             // failure event here 
             new RaceEndedResultPositionsArchivePublisher(this.client).publish({
                 raceId : data.payload.race.raceId ,
@@ -43,6 +56,7 @@ export class RaceFinishedListener extends Listener <RaceEndedSagaEvent>{
                 status : false
             })
         } finally {
+            await mongoSession.endSession() ;
             msg.ack(); 
         }
     }

@@ -26,11 +26,11 @@ describe("GET /api/races", () => {
             endingPos: { longitude: 30.001, latitude: 31.001 },
         }).save();
 
-        const token = getAuthToken("user-1");
+        const cookie = getAuthCookie("user-1");
 
         const response = await request(app)
             .get("/api/races")
-            .set("Authorization", `Bearer ${token}`)
+            .set("Cookie", cookie)
             .send()
             .expect(200);
 

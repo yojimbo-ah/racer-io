@@ -9,7 +9,10 @@ import RaceCreatedSagaListener from "./events/listeners/raceCreatedSagaListener"
 import RaceCancelledArchiveListener from "./events/listeners/raceCancelledArchiveListener";
 import UserCreatedListener from "./events/listeners/userCreatedListener";
 import UserCreationCancelledArchiveListener from "./events/listeners/userCreationFailedListener";
-
+import { connectMongo  } from "./outbox/connectMongo";
+import { prepareMongo } from "./outbox/setMongoosePrimary";
+import { startOutboxRelay } from "./outbox/outboxRelay";
+import { start } from "node:repl";
 const connect = async () => {
     // making sure that the enviromental variables exist 
     // so we dont have a errror and so we can use the exclamation mark later
@@ -30,7 +33,9 @@ const connect = async () => {
 
     try {
 
-        await mongoose.connect(process.env.MONGO_URI!) ;
+        // connnects to databses and configures it 
+        await connectMongo(process.env.MONGO_URI) ;
+        await prepareMongo() ;
         await natsWrapper.connect(process.env.NATS_CLUSTER_ID , process.env.NATS_CLIENT_ID , {
             url : process.env.NATS_URL
         }) ;
@@ -56,7 +61,8 @@ const connect = async () => {
 
         new UserCreatedListener(natsWrapper.client).listen() ;
         new UserCreationCancelledArchiveListener(natsWrapper.client).listen() ;
-        
+        // always treat the relay after setting the db 
+        await startOutboxRelay() ;
         app.listen(3000 , () => {
             console.log("listening  on 3000") ;
         })

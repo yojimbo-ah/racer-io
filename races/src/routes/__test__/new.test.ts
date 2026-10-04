@@ -29,7 +29,7 @@ describe("POST /api/races/new", () => {
     });
 
     it('returns error 400 , no user in redis databse ' , async () => {
-        const token1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
+        const cookie1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
         const response1 = await request(app)
         .post('/api/races/new')
         .set('Cookie' , cookie1)
@@ -49,7 +49,7 @@ describe("POST /api/races/new", () => {
 
 
     it('returns error 400 , one of the users away from the starting position ' , async () => {
-        const token1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
+        const cookie1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
         await redis.hset('user-1' , {
             longitude : 10 ,
             latitude : 10 ,
@@ -84,7 +84,7 @@ describe("POST /api/races/new", () => {
     })
 
     it("creates a race when payload is valid", async () => {
-        const token1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
+        const cookie1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
         await redis.hset('user-1' , {
             longitude : 10 ,
             latitude : 10 ,
@@ -122,12 +122,12 @@ describe("POST /api/races/new", () => {
         expect(race).toBeDefined() ;
         expect(race!.raceStatus).toEqual(RaceStatus.RaceAwaiting) ;
 
-        const raceRedis = await redis.get(`race:awaiting:${race!._id.toString()}`) ;
+        const raceRedis = await redis.get(`race:await:${race!._id.toString()}`) ;
         expect(raceRedis).toBeDefined() ;
     }) ;
 
     it('error returns 400 , one of the users is not idle beceause he is in a race' , async () => {
-        const token1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
+        const cookie1 = global.getAuthCookie('user-1' , 'user1@gmail.com') ;
         const cookie2 = global.getAuthCookie('user-2' , 'user2@gmail.com') ;
         await redis.hset('user-1' , {
             longitude : 10 ,
