@@ -9,18 +9,20 @@ import RaceCreatedSagaListener from "./events/listeners/raceCreatedSagaListener"
 import RaceCancelledArchiveListener from "./events/listeners/raceCancelledArchiveListener";
 import UserCreatedListener from "./events/listeners/userCreatedListener";
 import UserCreationCancelledArchiveListener from "./events/listeners/userCreationFailedListener";
-import { connectMongo  } from "./outbox/connectMongo";
 import { prepareMongo } from "./outbox/setMongoosePrimary";
 import { startOutboxRelay } from "./outbox/outboxRelay";
-import { start } from "node:repl";
+
 const connect = async () => {
     // making sure that the enviromental variables exist 
     // so we dont have a errror and so we can use the exclamation mark later
     // to tall typescypt to not force the type check
     // hello world  
-    if (!process.env.JWT_KEY || !process.env.MONGO_URI) {
-        throw new Error('JWT_KEY or MONGO_URI not diffined') ;
+    if (!process.env.JWT_KEY) {
+        throw new Error('JWT_KEy is not defined') ;
     }
+    if (!process.env.MONGO_URI) {
+        throw new Error('MOGNO_URi is not defined') ;
+    } ;
     if (!process.env.NATS_URL) {
         throw new Error('NATS connection url not dffined') ;
     }
@@ -34,7 +36,7 @@ const connect = async () => {
     try {
 
         // connnects to databses and configures it 
-        await connectMongo(process.env.MONGO_URI) ;
+        await mongoose.connect(process.env.MONGO_URI ,  { directConnection: true }) ;
         await prepareMongo() ;
         await natsWrapper.connect(process.env.NATS_CLUSTER_ID , process.env.NATS_CLIENT_ID , {
             url : process.env.NATS_URL

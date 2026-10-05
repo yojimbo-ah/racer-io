@@ -34,6 +34,8 @@ spec:
               value: "archive-service"
             - name: MONGO_URI
               value: 'mongodb://archive-mongo-srv:27017/archive'
+            - name: MONGO_SRV
+              value: 'archive-mongo-srv:27017'
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:

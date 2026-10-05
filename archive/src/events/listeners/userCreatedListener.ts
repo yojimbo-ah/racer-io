@@ -8,7 +8,7 @@ import UserCreatedResultRacesArchivePublisher from "../publishers/userCreatedRes
 import OutboxEvent from "../../models/outbox-model";
 import { context, propagation } from "@opentelemetry/api";
 import mongoose from "mongoose";
-import { ATTR_HW_BATTERY_CAPACITY } from "@opentelemetry/semantic-conventions/incubating";
+
 
 export default class UserCreatedListener extends Listener <UserCreatedSagaEvent> {
     subject = SubjectsUserCreationSaga.UserCreatedSaga as const ;
