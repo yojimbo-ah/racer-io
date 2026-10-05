@@ -1,0 +1,168 @@
+# Database ingress is deny-by-default for every selected database pod.
+# The allowed clients below match the REDIS_HOST and MONGO_URI values in this directory.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: auth-mongo-only-auth
+spec:
+  podSelector:
+    matchLabels:
+      app: auth-mongo
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: auth
+      ports:
+        - protocol: TCP
+          port: 27017
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: archive-mongo-only-archive
+spec:
+  podSelector:
+    matchLabels:
+      app: archive-mongo
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: archive
+      ports:
+        - protocol: TCP
+          port: 27017
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: races-mongo-only-races
+spec:
+  podSelector:
+    matchLabels:
+      app: races-mongo
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: races
+      ports:
+        - protocol: TCP
+          port: 27017
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: saga-mongo-only-saga
+spec:
+  podSelector:
+    matchLabels:
+      app: races-saga-orchestrator-mongo
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: races-saga-orchestrator
+      ports:
+        - protocol: TCP
+          port: 27017
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: positions-redis-only-position-clients
+spec:
+  podSelector:
+    matchLabels:
+      app: positions-redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: positions
+        - podSelector:
+            matchLabels:
+              app: predictions
+      ports:
+        - protocol: TCP
+          port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: races-redis-only-races
+spec:
+  podSelector:
+    matchLabels:
+      app: races-redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: races
+      ports:
+        - protocol: TCP
+          port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: socket-gateway-redis-only-socket-gateway
+spec:
+  podSelector:
+    matchLabels:
+      app: socket-gateway-redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: socket-gateway
+      ports:
+        - protocol: TCP
+          port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: blacklist-redis-only-configured-clients
+spec:
+  podSelector:
+    matchLabels:
+      app: blacklist-redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: auth
+        - podSelector:
+            matchLabels:
+              app: archive
+        - podSelector:
+            matchLabels:
+              app: positions
+        - podSelector:
+            matchLabels:
+              app: races
+        - podSelector:
+            matchLabels:
+              app: socket-gateway
+      ports:
+        - protocol: TCP
+          port: 6379

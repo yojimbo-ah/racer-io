@@ -5,7 +5,7 @@ deploy:
     # there are two options base and k8s , base is used for testing beceause it not rate limited
     # and used when testing with k6 , but k6 is used for the deploy
     manifests:
-      - ./infra/base/*
+      - ./infra/k8s/*
 build:
   local:
     push: false
@@ -67,4 +67,5 @@ build:
         manual:
           - src: 'src/**/*.ts'
             dest: .
- 
+# to do ,  run choas tests meaning run k6 tests and delete pods while they are running
+# to simualite a service going out of reach 

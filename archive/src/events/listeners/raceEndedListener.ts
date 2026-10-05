@@ -7,7 +7,7 @@ import Race from "../../models/race-model";
 import RaceEndedResultPositionsArchivePublisher from "../publishers/raceEndedResultPositionsArchive";
 import OutboxEvent from "../../models/outbox-model";
 import { context, propagation } from "@opentelemetry/api";
-import mongoose, { mongo } from 'mongoose' ;
+import mongoose from 'mongoose' ;
 
 // change it to listen to another even not this event 
 // the event to listen to is : RaceEndedSagaEvent
