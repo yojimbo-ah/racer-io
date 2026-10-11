@@ -21,7 +21,7 @@ export default class UserCreatedListener extends Listener <UserCreatedSagaEvent>
         })
         const mongoSession = await mongoose.startSession() ;
         try {
-            mongoSession.withTransaction(async () => {
+            await mongoSession.withTransaction(async () => {
                 await user.save({session : mongoSession}) ;
                 const payload : UserCreatedResultRacesArchiveEvent['data'] = {
                     sagaId : data.sagaId ,

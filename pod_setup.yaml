@@ -1,0 +1,85 @@
+# this config file will let you select wish services and there pods you wanna open during testing 
+# since the app turns very heavy with a lot of pods and service and dbs running together it can
+# crash your pc , so select wish service you want during testing and run them only 
+# will change it such that it runs from the base ( without the limitations 
+# of requests by the rate limiting of ingress nginx )
+# ---------- infra ----------
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata: { name: nats }
+manifests:
+  rawYaml: [infra/k8s/nats-depl.yaml]
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata: { name: races-mongo }
+manifests:
+  rawYaml: [infra/k8s/races-mongo-depl.yaml]
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata: { name: archive-mongo }
+manifests:
+  rawYaml: [infra/k8s/archive-mongo-depl.yaml]
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata: { name: auth-mongo }
+manifests:
+  rawYaml: [infra/k8s/auth-mongo-depl.yaml]
+---
+# ---------- services ----------
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata: { name: auth }
+requires:
+  - configs: [auth-mongo, nats]
+build:
+  artifacts:
+    - image: ahmed0ahmed/racer-auth
+      context: auth
+      docker: { dockerfile: Dockerfile }
+      sync:
+        manual:
+          - { src: "src/**/*.ts", dest: . }
+manifests:
+  rawYaml: [infra/k8s/auth-depl.yaml]
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata: { name: archive }
+requires:
+  - configs: [archive-mongo, nats]
+build:
+  artifacts:
+    - image: ahmed0ahmed/racer-archive
+      context: archive
+      docker: { dockerfile: Dockerfile }
+      sync:
+        manual:
+          - { src: "src/**/*.ts", dest: . }
+manifests:
+  rawYaml: [infra/k8s/archive-depl.yaml]
+---
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata: { name: races }
+requires:
+  - configs: [races-mongo, nats]
+build:
+  artifacts:
+    - image: ahmed0ahmed/racer-races
+      context: races
+      docker: { dockerfile: Dockerfile }
+      sync:
+        manual:
+          - { src: "src/**/*.ts", dest: . }
+manifests:
+  rawYaml: [infra/k8s/races-depl.yaml]
+---
+# ---------- groups (optional shortcuts) ----------
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata: { name: chaos }
+requires:
+  - configs: [auth, archive, races]

@@ -351,6 +351,22 @@ teardown. Position data is stored in Redis, not MongoDB. Do not run `FLUSHDB` ag
 a shared Redis instance during a load test; it can remove state belonging to another
 service or another test. Use the per-test cleanup paths and Redis key expiry instead.
 
+### Chaos testing
+
+The opt-in pod disruption helper is documented in
+[`tests/chaos/README.md`](tests/chaos/README.md). It starts a local k6 command,
+deletes one selected Kubernetes pod after a delay, waits for the Deployment to
+recover, and returns the k6 exit code. It does not delete k6 binaries or test files.
+
+Run it from the repository root only against the local `infra/base` stack or a
+disposable test cluster:
+
+```powershell
+.\tests\chaos\run-pod-disruption.ps1 `
+  -Deployment races-depl `
+  -TestCommand "npm --prefix auth run k6:signup"
+```
+
 ### Kubernetes Test Setups
 
 There are two deployment configurations:

@@ -67,3 +67,34 @@ kubectl create secret generic access-jwt-key --from-literal=ACCESS_JWT_KEY=<32+ 
 
 This stack has no abuse protection of any kind. Only run it locally or on a throwaway
 cluster — never against a public host.
+
+## Pod disruption testing
+
+Run the real auth signup k6 scenario while replacing one downstream consumer:
+
+```powershell
+.\tests\chaos\run-pod-disruption.ps1 `
+  -Deployment races-depl `
+  -TestCommand "npm --prefix auth run k6:signup" `
+  -DeleteAfterSeconds 10 `
+  -RecoveryTimeoutSeconds 120
+```
+
+Run the same test against the archive consumer:
+
+```powershell
+.\tests\chaos\run-pod-disruption.ps1 `
+  -Deployment archive-depl `
+  -TestCommand "npm --prefix auth run k6:signup" `
+  -DeleteAfterSeconds 10 `
+  -RecoveryTimeoutSeconds 120
+```
+
+The script deletes one pod, waits for the deployment rollout to become ready, and
+returns the k6 process exit code. `k6:signup` checks that signup returns a user,
+access token, and cookies. It does not by itself prove that a downstream saga
+completed, so inspect the service logs and database/event state after the run.
+
+Deleting `races-depl` or `archive-depl` tests whether NATS retains the user-created
+event and the consumer processes it after the pod returns. It is intentionally
+opt-in and requires `kubectl` to point at a disposable test cluster.

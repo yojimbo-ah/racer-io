@@ -4,8 +4,11 @@ deploy:
   kubectl:
     # there are two options base and k8s , base is used for testing beceause it not rate limited
     # and used when testing with k6 , but k6 is used for the deploy
+    # all the tests are running well , you can add intesity to the tests if you want ,
+    # but i dont suggest that if you are running them locally since it extremly heavy on the pc
+    # you can run them on virtual macine in the cloud
     manifests:
-      - ./infra/k8s/*
+      - ./infra/base/*
 build:
   local:
     push: false

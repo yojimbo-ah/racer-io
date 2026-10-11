@@ -186,6 +186,10 @@ export function rawPost(path, body, params = {}, name = 'raw') {
   return watch(http.post(url(path), body, tagged(name, params)));
 }
 
+export function responseJson(response, path) {
+  return response.json(path);
+}
+
 // signup returns the refresh token under BOTH the `accessToken` body key and the
 // refreshToken cookie, while `token` is the access token -- so read it from the cookie
 export function authenticate(user = uniqueUser()) {
