@@ -5,7 +5,7 @@ k6 suite measures the services instead of nginx answering `429`.
 
 | | `infra/k8s` | `infra/base` |
 | --- | --- | --- |
-| Deployed by | `skaffold dev` | `kubectl apply -f infra/base/` |
+| Deployed by | `skaffold dev --profile production` | `skaffold dev --profile test` |
 | nginx per-IP limits | yes (`limit-rpm` / `limit-rps` / burst) | **none** |
 | socket `position:update` limit | 1 per 10s per user | **disabled** |
 | JWT / redis / mongo / NATS | required | same |
@@ -31,17 +31,25 @@ in `infra/k8s` is still called `races-saga-orchestrator-mongo-depl copy.yaml`.
 
 ## Switching between the two setups
 
-Skaffold owns `infra/k8s`, so stop it first — otherwise it will immediately put the
-rate-limited ingress back:
+Skaffold selects the manifest tree through its profile. Stop the current profile
+before switching:
 
-```bash
+```powershell
 # load test stack
-skaffold delete
-kubectl apply -f infra/base/
+skaffold delete --profile production
+skaffold dev --profile test
 
 # back to the normal stack
-kubectl delete -f infra/base/ --ignore-not-found
-skaffold dev
+skaffold delete --profile test
+skaffold dev --profile production
+```
+
+To reduce local resource usage, select a service module. Its declared infrastructure
+dependencies are included automatically:
+
+```powershell
+skaffold dev --profile test --module auth
+skaffold dev --profile test --module positions
 ```
 
 Rolling back just the rate limiting while leaving the pods alone:

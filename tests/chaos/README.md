@@ -1,6 +1,7 @@
 # Chaos testing
 
-The scripts in this directory run a k6 test while deliberately deleting a pod.
+The scripts in this directory run k6 tests, optionally while deliberately deleting
+a pod.
 They are intended for the local `infra/base` stack or a disposable test cluster,
 not a production or public cluster.
 
@@ -12,11 +13,10 @@ not a production or public cluster.
 - k6 installed and available on `PATH`
 - the stack deployed from the repository root
 
-Use the base stack for k6 because it disables the ingress and position rate limits:
+Use the test profile for k6 because it disables the ingress and position rate limits:
 
 ```powershell
-skaffold delete
-kubectl apply -f infra/base/
+skaffold dev --profile test
 ```
 
 Make sure the required Kubernetes secrets and TLS setup are present before starting
@@ -41,11 +41,13 @@ The script:
 3. waits `DeleteAfterSeconds`;
 4. deletes that pod without waiting;
 5. waits for the Deployment to become ready again; and
-6. returns the k6 process exit code.
+6. removes test data from the MongoDB and Redis deployments that are running; and
+7. returns the k6 process exit code.
 
 The Deployment should recreate the deleted pod. The test command is run on the
 machine where PowerShell is running; k6 is not installed in, copied to, or deleted
-from the Kubernetes pod.
+from the Kubernetes pod. Cleanup is enabled by default. Pass `-SkipCleanup` only
+when you intentionally need to inspect test data after the run.
 
 ### Test another consumer
 
@@ -86,12 +88,28 @@ kubectl logs deployment/archive-depl --all-containers --since=10m
 kubectl get pods
 ```
 
-The script does not delete deployments, persistent data, k6 binaries, or k6 test
-files. Stop the stack separately when testing is complete:
+The script does not delete deployments, persistent volumes, k6 binaries, or k6 test
+files. It drops only the application databases (`auth`, `archive`, and `races`)
+through their allowlisted Mongo deployments and flushes only the four application
+Redis deployments. Missing deployments are skipped, which allows focused Skaffold
+module runs. Stop the stack separately when testing is complete:
 
 ```powershell
-kubectl delete -f infra/base/ --ignore-not-found
+skaffold delete --profile test
 ```
+
+### Stress tests
+
+Run any k6 or other load command through the cleanup wrapper:
+
+```powershell
+.\tests\chaos\run-stress-test.ps1 `
+  -TestCommand "npm --prefix auth run k6:mixed"
+```
+
+The wrapper waits for the command to finish and performs the same cleanup in a
+`finally` block, including when the test exits with a failure. It returns the test
+exit code when cleanup succeeds and returns `2` when cleanup itself fails.
 
 ## Parameters
 
@@ -102,6 +120,7 @@ kubectl delete -f infra/base/ --ignore-not-found
 | `-TestCommand` | yes | - | Local PowerShell command to run, normally a k6 command |
 | `-DeleteAfterSeconds` | no | `30` | Delay before pod deletion (`0`-`3600`) |
 | `-RecoveryTimeoutSeconds` | no | `120` | Rollout wait timeout (`1`-`600`) |
+| `-SkipCleanup` | no | off | Preserve test data instead of cleaning MongoDB and Redis |
 
 Use a short deletion delay only when the test has enough setup time to reach the
 behavior being measured. Never run this against a shared or production cluster.

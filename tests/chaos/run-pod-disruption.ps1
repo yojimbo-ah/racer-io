@@ -12,10 +12,14 @@ param(
     [int] $DeleteAfterSeconds = 30,
 
     [ValidateRange(1, 600)]
-    [int] $RecoveryTimeoutSeconds = 120
+    [int] $RecoveryTimeoutSeconds = 120,
+
+    [switch] $SkipCleanup
 )
 
 $ErrorActionPreference = "Stop"
+$testExitCode = 1
+$cleanupError = $null
 
 kubectl version --client | Out-Null
 $deploymentJson = kubectl get deployment $Deployment -n $Namespace -o json | ConvertFrom-Json
@@ -35,12 +39,14 @@ if ([string]::IsNullOrWhiteSpace($pod)) {
 }
 
 Write-Host "Running '$TestCommand'. Pod '$pod' will be deleted after $DeleteAfterSeconds seconds."
-$testProcess = Start-Process -FilePath "powershell" `
-    -ArgumentList @("-NoProfile", "-Command", $TestCommand) `
-    -NoNewWindow `
-    -PassThru
+$testProcess = $null
 
 try {
+    $testProcess = Start-Process -FilePath "powershell" `
+        -ArgumentList @("-NoProfile", "-Command", $TestCommand) `
+        -NoNewWindow `
+        -PassThru
+
     Start-Sleep -Seconds $DeleteAfterSeconds
 
     if ($testProcess.HasExited) {
@@ -56,10 +62,26 @@ try {
         -n $Namespace --timeout="${RecoveryTimeoutSeconds}s"
 
     $testProcess.WaitForExit()
-    exit $testProcess.ExitCode
+    $testExitCode = $testProcess.ExitCode
 }
 finally {
-    if (-not $testProcess.HasExited) {
+    if ($null -ne $testProcess -and -not $testProcess.HasExited) {
         Stop-Process -Id $testProcess.Id
     }
+
+    if (-not $SkipCleanup) {
+        try {
+            & "$PSScriptRoot\cleanup-test-data.ps1" -Namespace $Namespace
+        }
+        catch {
+            $cleanupError = $_
+            Write-Error "Test data cleanup failed: $($_.Exception.Message)"
+        }
+    }
 }
+
+if ($null -ne $cleanupError) {
+    exit 2
+}
+
+exit $testExitCode

@@ -347,16 +347,18 @@ k6 run \
 ```
 
 The k6 tests create isolated test users where required and clean them up during
-teardown. Position data is stored in Redis, not MongoDB. Do not run `FLUSHDB` against
-a shared Redis instance during a load test; it can remove state belonging to another
-service or another test. Use the per-test cleanup paths and Redis key expiry instead.
+teardown. The chaos and stress wrappers also clean the allowlisted test MongoDB and
+Redis deployments after each run. Do not run these wrappers against a shared or
+production namespace: Redis cleanup uses `FLUSHDB` on the application Redis pods.
+Use `-SkipCleanup` only when you intentionally need to inspect data after a run.
 
 ### Chaos testing
 
 The opt-in pod disruption helper is documented in
 [`tests/chaos/README.md`](tests/chaos/README.md). It starts a local k6 command,
 deletes one selected Kubernetes pod after a delay, waits for the Deployment to
-recover, and returns the k6 exit code. It does not delete k6 binaries or test files.
+recover, cleans the test data, and returns the k6 exit code. It does not delete
+k6 binaries or test files.
 
 Run it from the repository root only against the local `infra/base` stack or a
 disposable test cluster:
@@ -369,35 +371,45 @@ disposable test cluster:
 
 ### Kubernetes Test Setups
 
-There are two deployment configurations:
+Skaffold now provides two profiles and independent modules:
 
 | Setup | Intended use | Rate limiting | Deployment |
 | --- | --- | --- | --- |
-| `infra/k8s` | Normal development and protected behavior | Nginx limits and position update limits enabled | `skaffold dev` |
-| `infra/base` | Local k6 load and behavior tests | Nginx limits removed; position update limits disabled | `kubectl apply -f infra/base/` |
+| `production` | Normal development and protected behavior | Nginx limits and position update limits enabled | `skaffold dev --profile production` |
+| `test` | Local k6 load and behavior tests | Nginx limits removed; position update limits disabled | `skaffold dev --profile test` |
 
-The base setup still uses the real MongoDB, Redis, NATS, ingress, and service
-containers. It removes selected limits so k6 can measure service behavior instead of
-mostly measuring `429` responses from Nginx. It should only be used locally or on a
-throwaway cluster.
+`production` is the safe default, so `skaffold dev` is equivalent to
+`skaffold dev --profile production`. The `test` profile still uses the real MongoDB,
+Redis, NATS, ingress, and service containers, but removes selected limits so k6 can
+measure service behavior instead of mostly measuring `429` responses from Nginx. Use
+it only locally or on a throwaway cluster.
 
-Use only one setup at a time. To switch to the load-test setup:
+By default Skaffold starts every module. To keep the computer responsive, select one
+service module; its declared dependencies are started automatically:
 
-```bash
-skaffold delete
-kubectl apply -f infra/base/
+```powershell
+# Test only auth and its MongoDB, Redis, NATS, and telemetry dependencies
+skaffold dev --profile test --module auth
+
+# Test only the positions service and its dependencies
+skaffold dev --profile test --module positions
+
+# Start all services with the protected production profile
+skaffold dev --profile production
 ```
 
-To return to the normal development setup:
+The module names are the `metadata.name` values in `skaffold.yaml`. Stop an existing
+profile before switching profiles:
 
-```bash
-kubectl delete -f infra/base/ --ignore-not-found
-skaffold dev
+```powershell
+skaffold delete --profile test
+skaffold dev --profile production --module races
 ```
 
-Do not use memory MongoDB or Redis services for k6. They are appropriate for isolated
-Jest tests, but they bypass the networking, persistence, expiry, shared state, NATS
-events, and rate-limit behavior that a live-system test is intended to measure.
+The underlying manifests remain in `infra/k8s` and `infra/base`; the profile chooses
+which tree each module deploys. Do not use memory MongoDB or Redis services for k6.
+They bypass the networking, persistence, expiry, shared state, NATS events, and
+rate-limit behavior that a live-system test is intended to measure.
 
 ### OpenTelemetry And Grafana
 
