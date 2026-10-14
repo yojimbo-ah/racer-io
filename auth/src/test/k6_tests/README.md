@@ -74,8 +74,8 @@ k6 run --out experimental-prometheus-rw auth/src/test/k6_tests/auth-flow.js
 
 ## Things to know before you run these
 
-The normal `infra/k8s` ingress still rate-limits auth at `5` requests per minute with a
-burst multiplier of `2`. Use `infra/base` for load tests, or point `BASE_URL` straight
+The production overlay still rate-limits auth at `5` requests per minute with a
+burst multiplier of `2`. Use the Kustomize `test` overlay for load tests, or point `BASE_URL` straight
 at `auth-srv:3000` through a port-forward if you want to measure the service rather than
 the proxy.
 

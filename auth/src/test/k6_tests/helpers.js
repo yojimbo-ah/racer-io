@@ -25,7 +25,7 @@ export const PATHS = {
 
 // -------------------------------------------------------------------- metrics
 
-// any 429 means a rate limiter is still in the path -- apply infra/base
+// any 429 means a rate limiter is still in the path -- use the Kustomize test overlay
 export const rateLimited = new Rate('auth_rate_limited');
 
 // ----------------------------------------------------------------- thresholds

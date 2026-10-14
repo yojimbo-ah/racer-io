@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - resources/archive-depl.yaml
+  - resources/archive-mongo-depl.yaml
+  - resources/auth-depl.yaml
+  - resources/auth-mongo-depl.yaml
+  - resources/blacklist-redis-depl.yaml
+  - resources/client-depl.yaml
+  - resources/database-network-policies.yaml
+  - resources/ingress-srv.yaml
+  - resources/nats-depl.yaml
+  - resources/otel-lgtm-depl.yaml
+  - resources/positions-depl.yaml
+  - resources/positions-redis-depl.yaml
+  - resources/predictions-depl.yaml
+  - resources/races-depl.yaml
+  - resources/races-mongo-depl.yaml
+  - resources/races-redis-depl.yaml
+  - resources/races-saga-orchestrator-depl.yaml
+  - resources/races-saga-orchestrator-mongo-depl.yaml
+  - resources/socket-gateway-depl.yaml
+  - resources/socket-gateway-redis-depl.yaml

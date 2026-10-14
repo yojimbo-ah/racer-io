@@ -56,7 +56,7 @@ keys also have a ten-minute expiry.
 fast. It is not appropriate for k6 live testing: it would bypass Redis networking,
 serialization, expiry, shared state, rate limiting, and the NATS event path.
 
-Keep MongoDB and Redis from `infra/base` for k6. Positions has no MongoDB runtime data,
+Keep MongoDB and Redis from the Kustomize `test` overlay for k6. Positions has no MongoDB runtime data,
 so there is no positions Mongo database to reset. Avoid `FLUSHDB` on the shared Redis
 instance; it can remove state belonging to other services. Use unique test users and the
 per-run cleanup path instead.

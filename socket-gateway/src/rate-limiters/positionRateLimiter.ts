@@ -14,7 +14,7 @@ export const positionRateLimiter = new RateLimiterRedis({
 
 // load tests push position updates far above 1 per 10s per user, so the limiter
 // is skipped entirely when POSITION_RATE_LIMIT_DISABLED=true -- that is what the
-// manifests under infra/base set, the manifests under infra/k8s do not
+// the Kustomize test overlay sets; production leaves it unset
 export const isPositionRateLimitDisabled : boolean =
     process.env.POSITION_RATE_LIMIT_DISABLED === "true" ;
 

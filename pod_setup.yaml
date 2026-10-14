@@ -8,25 +8,25 @@ apiVersion: skaffold/v4beta11
 kind: Config
 metadata: { name: nats }
 manifests:
-  rawYaml: [infra/k8s/nats-depl.yaml]
+  rawYaml: [infra/kustomize/base/resources/nats-depl.yaml]
 ---
 apiVersion: skaffold/v4beta11
 kind: Config
 metadata: { name: races-mongo }
 manifests:
-  rawYaml: [infra/k8s/races-mongo-depl.yaml]
+  rawYaml: [infra/kustomize/base/resources/races-mongo-depl.yaml]
 ---
 apiVersion: skaffold/v4beta11
 kind: Config
 metadata: { name: archive-mongo }
 manifests:
-  rawYaml: [infra/k8s/archive-mongo-depl.yaml]
+  rawYaml: [infra/kustomize/base/resources/archive-mongo-depl.yaml]
 ---
 apiVersion: skaffold/v4beta11
 kind: Config
 metadata: { name: auth-mongo }
 manifests:
-  rawYaml: [infra/k8s/auth-mongo-depl.yaml]
+  rawYaml: [infra/kustomize/base/resources/auth-mongo-depl.yaml]
 ---
 # ---------- services ----------
 apiVersion: skaffold/v4beta11
@@ -43,7 +43,7 @@ build:
         manual:
           - { src: "src/**/*.ts", dest: . }
 manifests:
-  rawYaml: [infra/k8s/auth-depl.yaml]
+  rawYaml: [infra/kustomize/base/resources/auth-depl.yaml]
 ---
 apiVersion: skaffold/v4beta11
 kind: Config
@@ -59,7 +59,7 @@ build:
         manual:
           - { src: "src/**/*.ts", dest: . }
 manifests:
-  rawYaml: [infra/k8s/archive-depl.yaml]
+  rawYaml: [infra/kustomize/base/resources/archive-depl.yaml]
 ---
 apiVersion: skaffold/v4beta11
 kind: Config
@@ -75,7 +75,7 @@ build:
         manual:
           - { src: "src/**/*.ts", dest: . }
 manifests:
-  rawYaml: [infra/k8s/races-depl.yaml]
+  rawYaml: [infra/kustomize/base/resources/races-depl.yaml]
 ---
 # ---------- groups (optional shortcuts) ----------
 apiVersion: skaffold/v4beta11

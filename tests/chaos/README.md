@@ -2,7 +2,7 @@
 
 The scripts in this directory run k6 tests, optionally while deliberately deleting
 a pod.
-They are intended for the local `infra/base` stack or a disposable test cluster,
+They are intended for the local Kustomize `test` overlay or a disposable test cluster,
 not a production or public cluster.
 
 ## Prerequisites
@@ -20,7 +20,7 @@ skaffold dev --profile test
 ```
 
 Make sure the required Kubernetes secrets and TLS setup are present before starting
-the stack. See [`infra/base/README.md`](../../infra/base/README.md).
+the stack. See the Kubernetes deployment section in [`README.md`](../../README.md).
 
 ## Run a disruption test
 

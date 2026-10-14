@@ -1,0 +1,75 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+patches:
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: positions-api-ingress
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1limit-rps
+      - op: remove
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1limit-burst-multiplier
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: auth-ingress
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1limit-rpm
+      - op: remove
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1limit-burst-multiplier
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: races-ingress
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1limit-rps
+      - op: remove
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1limit-burst-multiplier
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: archive-ingress
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1limit-rps
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: client-ingress
+    patch: |-
+      - op: remove
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1limit-rps
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: positions-depl
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: POSITION_RATE_LIMIT_DISABLED
+          value: "true"
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: socket-gateway-depl
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: POSITION_RATE_LIMIT_DISABLED
+          value: "true"
